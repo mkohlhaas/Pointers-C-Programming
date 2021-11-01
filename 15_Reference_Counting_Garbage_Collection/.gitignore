@@ -1,0 +1,7 @@
+gmon.out
+uftrace*/
+*.o
+109_intrc
+110_lists
+111_extension-lists
+112_strees

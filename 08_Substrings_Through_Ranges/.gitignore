@@ -1,0 +1,10 @@
+*.o
+061_creation
+062_reverse
+063_copying
+064_comparison
+065_sort
+066_word-iterator
+067_searching
+068_occurrences
+069_delete-replace

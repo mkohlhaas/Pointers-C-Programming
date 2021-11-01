@@ -1,0 +1,131 @@
+main() {                                                                                                                      
+  init_empty_node() {                                                                                                                     init_empty_node(); 
+    rc_alloc() {                                                                                                                           
+      malloc();                                                                                                                            
+    } /* rc_alloc */                                                                                                                       
+  } /* init_empty_node*/                                                                                                                                                                                                             
+  incref();                                                EMPTY                                                                          x = new_node(1, new_node(0, EMPTY, EMPTY), new_node(3, new_node(2, EMPTY, EMPTY), EMPTY));     
+  incref();                                                EMPTY                                                                               
+  incref();                                                EMPTY                                                                           
+  new_node() {                                             2                                                                               
+    rc_alloc() {                                                                                                                          
+      malloc();                                                                                                                                                                                                                      
+    } /* rc_alloc */                                                                                                                      
+    memcpy();                                                                                                                             
+  } /* new_node */                                                                                                                        
+  new_node() {                                             3                                                                                                                                                                         
+    rc_alloc() {                                                                                                                           
+      malloc();                                                                                                                           
+    } /* rc_alloc */                                                                                                                      
+    memcpy();                                                                                                                             
+  } /* new_node */
+  incref();                                                EMPTY
+  incref();                                                EMPTY
+  new_node() {                                             0
+    rc_alloc() {
+      malloc();
+    } /* rc_alloc */
+    memcpy();
+  } /* new_node */
+  new_node() {                                             1
+    rc_alloc() {
+      malloc();
+    } /* rc_alloc */
+    memcpy();
+  } /* new_node */
+  print_tree();                                                              ((,0[1],),1[1],((,2[1],),3[1],))                             print_tree(x) 
+  incref();                                                EMPTY                                                                          y = new_node(10, new_node(9, EMPTY, EMPTY), new_node(11, EMPTY, EMPTY));
+  incref();                                                EMPTY
+  new_node() {                                             11
+    rc_alloc() {
+      malloc();
+    } /* rc_alloc */
+    memcpy();
+  } /* new_node */
+  incref();                                                EMPTY
+  incref();                                                EMPTY
+  new_node() {                                             9
+    rc_alloc() {
+      malloc();
+    } /* rc_alloc */
+    memcpy();
+  } /* new_node */
+  new_node() {                                             10
+    rc_alloc() {
+      malloc();
+    } /* rc_alloc */
+    memcpy();
+  } /* new_node */
+  incref();                                                                                                                               z = new_node(5, incref(x), incref(y));
+  incref();
+  new_node() {                                             5
+    rc_alloc() {
+      malloc();
+    } /* rc_alloc */
+    memcpy();
+  } /* new_node */
+  print_tree();                                                      (((,0[1],),1[2],((,2[1],),3[1],)),5[1],((,9[1],),10[2],(,11[1],)))   print_tree(z);   
+  decref_ctx(0x5619ba182000, 0);                                     ctx: (nil)                                                           decref(x); print_tree(z);   
+  print_tree();                                                      (((,0[1],),1[1],((,2[1],),3[1],)),5[1],((,9[1],),10[2],(,11[1],)))   
+  decref_ctx(0x5619ba1c88b0, 0) {                                    ctx: (nil)                                                           decref(z); print_tree(y);  
+    cleanup() {
+      free_node(0x5619ba1c88b0, 0x5619ba1c88a0) {                    Freeing node 5.
+        decref_ctx(0x5619ba182000, 0x5619ba1c88a0) {                 ctx: 0x5619ba1c88a0
+          print_stack();                                             stack: 0x5619ba1c88a0: 5, 0x5619ba181ff0: 1
+        } /* decref_ctx */
+        decref_ctx(0x5619ba18b230, 0x5619ba1c88a0);                  ctx: 0x5619ba1c88a0
+      } /* free_node */
+      free(0x5619ba1c88a0);
+      free_node(0x5619ba182000, 0x5619ba181ff0) {                    Freeing node 1.
+        decref_ctx(0x5619ba181fd0, 0x5619ba181ff0) {                 ctx: 0x5619ba181ff0
+          print_stack();                                             stack: 0x5619ba181ff0: 1, 0x5619ba181fc0: 0,
+        } /* decref_ctx */
+        decref_ctx(0x5619b950dcc0, 0x5619ba181ff0) {                 ctx: 0x5619ba181ff0
+          print_stack();                                             stack: 0x5619ba181ff0: 1, 0x5619b950dcb0: 3, 0x5619ba181fc0: 0, 
+        } /* decref_ctx */
+      } /* free_node */
+      free(0x5619ba181ff0);
+      free_node(0x5619b950dcc0, 0x5619b950dcb0) {                    Freeing node 3.
+        decref_ctx(0x5619b950dc90, 0x5619b950dcb0) {                 ctx: 0x5619b950dcb0
+          print_stack();                                             stack: 0x5619b950dcb0: 3, 0x5619b950dc80: 2, 0x5619ba181fc0: 0, 
+        } /* decref_ctx */
+        decref_ctx(0x5619ba188bc0, 0x5619b950dcb0);                  ctx: 0x5619b950dcb0
+      } /* free_node */
+      free(0x5619b950dcb0);
+      free_node(0x5619b950dc90, 0x5619b950dc80) {                    Freeing node 2.
+        decref_ctx(0x5619ba188bc0, 0x5619b950dc80);                  ctx: 0x5619b950dc80
+        decref_ctx(0x5619ba188bc0, 0x5619b950dc80);                  ctx: 0x5619b950dc80
+      } /* free_node */
+      free(0x5619b950dc80);
+      free_node(0x5619ba181fd0, 0x5619ba181fc0) {                    Freeing node 0.
+        decref_ctx(0x5619ba188bc0, 0x5619ba181fc0);                  ctx: 0x5619ba181fc0
+        decref_ctx(0x5619ba188bc0, 0x5619ba181fc0);                  ctx: 0x5619ba181fc0
+      } /* free_node */
+      free(0x5619ba181fc0);
+    } /* cleanup */
+  } /* decref_ctx */
+  print_tree();                                                      ((,9[1],),10[1],(,11[1],))
+  decref_ctx(0x5619ba18b230, 0) {                                    ctx: (nil)                                                            decref(y);  // free the rest
+    cleanup() {
+      free_node(0x5619ba18b230, 0x5619ba18b220) {                    Freeing node 10.
+        decref_ctx(0x5619ba17f9e0, 0x5619ba18b220) {                 ctx: 0x5619ba18b220
+          print_stack();                                             stack: 0x5619ba18b220: 10, 0x5619ba17f9d0: 9, 
+        } /* decref_ctx */
+        decref_ctx(0x5619ba17f9b0, 0x5619ba18b220) {                 ctx: 0x5619ba18b220
+          print_stack();                                             stack: 0x5619ba18b220: 10, 0x5619ba17f9a0: 11, 0x5619ba17f9d0: 9, 
+        } /* decref_ctx */
+      } /* free_node */
+      free(0x5619ba18b220);
+      free_node(0x5619ba17f9b0, 0x5619ba17f9a0) {                    Freeing node 11.
+        decref_ctx(0x5619ba188bc0, 0x5619ba17f9a0);                  ctx: 0x5619ba17f9a0
+        decref_ctx(0x5619ba188bc0, 0x5619ba17f9a0);                  ctx: 0x5619ba17f9a0
+      } /* free_node */
+      free(0x5619ba17f9a0);
+      free_node(0x5619ba17f9e0, 0x5619ba17f9d0) {                    Freeing node 9.
+        decref_ctx(0x5619ba188bc0, 0x5619ba17f9d0);                  ctx: 0x5619ba17f9d0
+        decref_ctx(0x5619ba188bc0, 0x5619ba17f9d0);                  ctx: 0x5619ba17f9d0
+      } /* free_node */
+      free(0x5619ba17f9d0);
+    } /* cleanup */
+  } /* decref_ctx */
+} /* main */                                                         0 nodes.                                                              printf("%zu nodes.\n", n_nodes);

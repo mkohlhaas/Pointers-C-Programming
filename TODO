@@ -1,0 +1,19 @@
+Chapter_03/020_const.c
+Chapter_08/069_delete-replace.c
+Chapter_09 Garbage Collection:
+   - https://www.hboehm.info/gc/simple_example.html
+   - https://github.com/ivmai/bdwgc/#the-c-interface-to-the-allocator
+Chapter_10/077_void-array.c
+p. 276 statement expressions & comma operator
+p. 280 __typeof__ macro
+p. 287 flexible array members
+Chapter 10: Heap-Allocated Inlined Array (the whole chapter is a bit chaotic)
+write gdb macro for analyzing (singly/doubly) linked lists 
+Chapter_11_Singly_linked_lists/085_pointer-singly-linked-lists.c: implement functions delete_value() and reverse()
+p. 340: extern, static, inline, compilation unit
+Chapter_11_Doubly_linked_lists: link_before() in case of x,y being the dummy
+Chapter 11, doubly linked lists: 087_doubly-linked-lists.c
+ - concatenate()
+Chapter_12/explicit-stack-embed.c: print_stree() -> &(*t)->left
+Chapter_12/096_parent.c
+Chapter_14/stree.c -> remove_node()

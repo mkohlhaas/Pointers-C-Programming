@@ -1,0 +1,165 @@
+=======================
+Chapter 1: Introduction
+=======================
+
+=========================================
+Chapter 2: Memory, Objects, and Addresses
+=========================================
+1. The Memory of a Generic Process
+2. Objects, Sizes, and Addresses
+3. Memory Allocation
+4. Alignment
+5. Call Stacks and the Lifetime of Local Variables
+
+===================
+Chapter 3: Pointers
+===================
+6. Call by Reference
+7. NULL Pointers
+8. Const and Pointers
+9. Restricted Pointers
+
+=============================
+Chapter 4: Pointers and Types
+=============================
+10. Pointers, Types, and Data Interpretation
+11. Casting Between Pointers of Different Types
+      Void Pointers
+      Qualified Types
+      Unions
+      Struct Pointers
+      Character Pointers
+      Arbitrary Types
+12. Void Pointers
+
+=================
+Chapter 5: Arrays
+=================
+13. Arrays, Indices, and Pointer Arithmetic
+14. Out-of-Bounds Errors
+15. Pointers to Arrays
+16. Arrays and Function Arguments
+17. Multidimensional Arrays
+
+==============================
+Chapter 6: Working with Arrays
+==============================
+18. Sieve of Eratosthenes
+      Array Solution
+      Pointer Solution
+      Radix Sorting
+19. Generic Functions on Arrays
+
+==================
+Chapter 7: Strings
+==================
+20. Strings as Sequences of Bytes
+21. Integers to Strings
+22. Run-Length Encoding
+23. Finding Words
+24. Compacting Words
+25. Buffer Overflow Errors
+
+====================================
+Chapter 8: Substrings Through Ranges
+====================================
+26. Basic Operations
+27. Revisiting Word Iterators
+28. Replacing Strings
+
+====================================
+Chapter 9: Dynamic Memory Management
+====================================
+29. Functions for Dynamic Memory Allocation
+      malloc()
+      calloc()
+      realloc()
+      aligned_alloc()
+      free()
+30. String Operations
+31. Dynamic Arrays
+32. Gapped Buffers
+
+==================================
+Chapter 10: Generic Dynamic Arrays
+==================================
+33. Void Pointers
+34. Generic Memory Buffer
+35. Code Generating Macros
+36. Inlining Macros
+37. Heap-Allocated Inlined Array
+
+========================
+Chapter 11: Linked Lists
+========================
+38. Singly Linked Lists
+39. Adding a Level of Indirection
+40. Adding a Dummy Element
+41. Doubly Linked Lists
+42. Link Operations
+43. List Operations
+44. Sorting Doubly Linked Lists
+      Selection Sort
+      Insertion Sort
+      Merge Sort
+      Quicksort
+
+========================
+Chapter 12: Search Trees
+========================
+45. Tree Operations
+      Contains
+      Insert
+      Delete
+      Free
+      Recursive Data Structures and Recursive Functions
+46. Direct Implementation
+47. Pass by Reference
+48. Refactoring
+      Iterative Functions
+49. Explicit Stacks
+50. Morris Traversal
+      Freeing Nodes Without Recursion and Memory Allocation
+51. Adding a Parent Pointer
+
+=============================
+Chapter 13: Function Pointers
+=============================
+52. Function Pointers for High-Order Functions
+53. Callbacks
+54. Generic String Iterator
+55. Function Pointers for Abstract Data Structures
+56. Function Pointers for Polymorphic Data Structures
+      Single Inheritance Objects and Classes
+      A Hierarchy of Expression Classes
+57. Generating Functions
+      Tagged Pointers
+
+===================================
+Chapter 14: Generic Lists and Trees
+===================================
+58. Generic Lists
+      Casting to Links
+      Using Offsets
+59. Generic Search Trees
+
+=================================================
+Chapter 15: Reference Counting Garbage Collection
+=================================================
+60. Immutable Links with Reference Counting
+      Adding a Compiler Extension (Not Portable!)
+61. A Generic Reference Counter
+62. Search Trees with Reference Counting
+63. Circular Structures?
+
+============================
+Chapter 16: Allocation Pools
+============================
+64. A Simple Pool for Tree Nodes
+65. Adding Resizing
+66. Adding Deallocation
+67. A Generic Pool
+
+=======================
+Chapter 17: Conclusions
+=======================
