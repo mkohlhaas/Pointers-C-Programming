@@ -298,42 +298,37 @@ parent_free(STree t)
 int
 main()
 {
+  printf("\33[38;5;206m========== Original ===========================\033[0m\n");
   STree t = EMPTY;
   insert(&t, 2);
   insert(&t, 3);
   insert(&t, 1);
   insert(&t, 6);
-
+  assert( contains(&t,  2));
+  assert( contains(&t,  1));
+  assert( contains(&t,  3));
+  assert(!contains(&t, 10));
+  assert(!contains(&t,  0));
   print_stree(&t);
   putchar('\n');
   check_tree(t);
   parent_traverse(t);
 
-  assert(contains(&t, 2));
-  assert(contains(&t, 1));
-  assert(contains(&t, 3));
-  assert(!contains(&t, 10));
-  assert(!contains(&t, 0));
-
-  printf("\n============================================================\n");
-
-  printf("Inserting 10 and 0:\n");
+  printf("\n\33[38;5;206m========== Inserting 10 and 0 =================\033[0m\n");
   insert(&t, 10);
   insert(&t, 0);
   check_tree(t);
   assert(contains(&t, 10));
-  assert(contains(&t, 0));
+  assert(contains(&t,  0));
   print_stree(&t);
   putchar('\n');
   parent_traverse(t);
   check_tree(t);
 
-  printf("\n============================================================\n");
-
-  printf("Deleting 12, 3 and 6:\n");
+  printf("\n\33[38;5;206m========== Deleting 12, 6 and 3 ===============\033[0m\n");
   delete(&t, 12);
-  delete(&t, 3);
-  delete(&t, 6);
+  delete(&t,  3);
+  delete(&t,  6);
   assert(!contains(&t, 3));
   assert(!contains(&t, 6));
   print_stree(&t);
@@ -342,9 +337,7 @@ main()
   check_tree(t);
   clear_stree(&t);
 
-  printf("\n============================================================\n");
-
-  printf("Tree from array;\n");
+  printf("\n\33[38;5;206m========== Tree from array ====================\033[0m\n");
   int    array[] = { 1, 2, 13, 4, 16, 8, 10 };
   int    n       = sizeof array / sizeof *array;
   STree* t2      = make_stree(n, array);
@@ -353,7 +346,7 @@ main()
   parent_traverse(*t2);
   free_stree(t2);
 
-  printf("\n============================================================\n");
+  printf("\n\33[38;5;206m===============================================\033[0m\n");
 
   printf("allocated = %d\n", allocated);
 }

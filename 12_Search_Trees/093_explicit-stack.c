@@ -52,10 +52,9 @@ void
 push(FreeFrame** stack, STree tree)
 {
   if (!tree) return;
-  FreeFrame* frame = malloc(sizeof *frame);  // allocate a FreeFrame structure
-  if (!frame) abort();                       // we do not tolerate errors!
-  *frame = (FreeFrame){ .tree = tree, .next = *stack };
-  *stack = frame;
+  FreeFrame* frame = malloc(sizeof *frame); if (!frame) abort();               // we do not tolerate errors! Allocate a FreeFrame structure
+            *frame = (FreeFrame){ .tree = tree, .next = *stack };
+            *stack = frame;
 }
 
 // pass stack as a pointer reference
@@ -80,10 +79,9 @@ free_nodes(STree tree)
     tree = pop(&stack);
     push(&stack, tree->left);
     push(&stack, tree->right);
-    printf("%d ", tree->value);
+    printf("Freeing: %d\n", tree->value);
     free(tree);
   }
-  putchar('\n');
 }
 
 // tree is STree*
@@ -268,7 +266,7 @@ main()
       leaf(6));
 #endif
 
-  printf("Original:\n");
+  printf("\33[38;5;206m========== Original ========================\033[0m\n");
   STree t = EMPTY;
   insert(&t, 3);
   insert(&t, 2);
@@ -281,40 +279,24 @@ main()
   assert(!contains(&t,  0));
   print_stree(&t);
 
-  printf("\n============================================================\n");
-
-  printf("Inserting 10 and 0:\n");
+  printf("\n\33[38;5;206m========== Inserting 10 and 0 ==============\033[0m\n");
   insert(&t, 10);
   insert(&t,  0);
   assert(contains(&t, 10));
   assert(contains(&t,  0));
   print_stree(&t);
 
-  printf("\n============================================================\n");
-
-  printf("Deleting 12:\n");
+  printf("\n\33[38;5;206m========== Deleting 12, 6 and 3 ============\033[0m\n");
   delete(&t, 12);
-  print_stree(&t);
-
-  printf("\n============================================================\n");
-
-  printf("Deleting 3:\n");
-  delete(&t, 3);
-  print_stree(&t);
-
-  printf("\n============================================================\n");
-
-  printf("Deleting 6:\n");
-  delete(&t, 6);
+  delete(&t,  3);
+  delete(&t,  6);
   assert(!contains(&t, 3));
   assert(!contains(&t, 6));
   print_stree(&t);
   putchar('\n');
   clear_stree(&t);
 
-  printf("============================================================\n");
-
-  printf("Tree from array:\n");
+  printf("\33[38;5;206m========== Tree from array =================\033[0m\n");
   int    array[] = { 1, 2, 3, 4, 6, 8, 10 };
   int    n       = sizeof array / sizeof *array;
   STree* t2      = make_stree(n, array);
@@ -322,9 +304,9 @@ main()
   putchar('\n');
   free_stree(t2);
 
-  int array1[] = { 4, 6, 8, 1, 2, 10, 3};
-      n        = sizeof array1 / sizeof *array1;
-      t2       = make_stree(n, array1);
+  int array1[]   = { 4, 6, 8, 1, 2, 10, 3};
+      n          = sizeof array1 / sizeof *array1;
+      t2         = make_stree(n, array1);
   print_stree(t2);
   putchar('\n');
   free_stree(t2);

@@ -52,13 +52,13 @@ free_nodes(Node* n)
     if (!curr->left) {
       Node* right = curr->right;
       printf("%d ", curr->value);
-      free(curr);  // only deallocation point
+      free(curr);                             // only deallocation point
       curr = right;
     } else {
       STree pred  = *rightmost(&curr->left);
-      pred->right = curr;         // create thread pointer
+      pred->right = curr;                     // create thread pointer
       Node* left  = curr->left;
-      curr->left  = EMPTY;        // never recurse into the left subtree again
+      curr->left  = EMPTY;                    // never recurse into the left subtree again
       curr        = left;
     }
   }
@@ -89,9 +89,9 @@ new_stree(void)
 STree*
 find_loc(STree* t, int val)
 {
-  while  (*t && (*t)->value != val) {
-    if   (val < (*t)->value) t = &(*t)->left;  // update function values; here just t
-    else                     t = &(*t)->right;
+  while  (*t && val != (*t)->value) {
+    if         (val < (*t)->value)     t = &(*t)->left;   // update function values; here just t
+    else    /* (val > (*t)->value) */  t = &(*t)->right;
   }
   return t;
 }
@@ -106,8 +106,8 @@ bool
 insert(STree* t, int val)
 {
   STree* loc = find_loc(t, val);
-  if (*loc) return true; // we have been already here
-  else      return !!(*loc = leaf(val));
+  if   (*loc) return true; // we have been already here
+  else        return !!(*loc = leaf(val));
 }
 
 void delete(STree* t, int val)
@@ -189,42 +189,39 @@ main()
         node(2, leaf(1), NULL),
         leaf(6));
 #endif
+  printf("\33[38;5;206m========== Original ========================\033[0m\n");
   STree t = EMPTY;
   insert(&t, 3);
   insert(&t, 2);
   insert(&t, 1);
   insert(&t, 6);
-  print_stree(&t);
-
-  assert(contains(&t, 2));
-  assert(contains(&t, 1));
-  assert(contains(&t, 3));
+  assert( contains(&t,  2));
+  assert( contains(&t,  1));
+  assert( contains(&t,  3));
   assert(!contains(&t, 10));
-  assert(!contains(&t, 0));
-
-  printf("\nInserting 10 and 0:\n");
-  printf("-------------------\n");
-  insert(&t, 10);
-  insert(&t, 0);
-  assert(contains(&t, 10));
-  assert(contains(&t, 0));
+  assert(!contains(&t,  0));
   print_stree(&t);
 
-  printf("\nDeleting 12, 3 and 6:\n");
-  printf("---------------------\n");
+  printf("\n\33[38;5;206m========== Inserting 10 and 0 ==============\033[0m\n");
+  insert(&t, 10);
+  insert(&t,  0);
+  assert(contains(&t, 10));
+  assert(contains(&t,  0));
+  print_stree(&t);
+
+  printf("\n\33[38;5;206m========== Deleting 12, 6 and 3 ============\033[0m\n");
   delete(&t, 12);
-  delete(&t, 3);
-  delete(&t, 6);
+  delete(&t,  3);
+  delete(&t,  6);
   assert(!contains(&t, 3));
   assert(!contains(&t, 6));
   print_stree(&t);
   clear_stree(&t);
 
-  printf("\nTree from array:\n");
-  printf("----------------\n");
-  int array[] = { 1, 2, 13, 4, 16, 8, 10 };
-  int n       = sizeof array / sizeof *array;
-  STree* t2   = make_stree(n, array);
+  printf("\n\33[38;5;206m========== Tree from array =================\033[0m\n");
+  int    array[] = { 1, 2, 13, 4, 16, 8, 10 };
+  int    n       = sizeof array / sizeof *array;
+  STree* t2      = make_stree(n, array);
   print_stree(t2);
   free_stree(t2);
   putchar('\n');

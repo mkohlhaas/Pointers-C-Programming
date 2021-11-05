@@ -47,12 +47,12 @@ STree insert(STree t, int val)
 #else
 // Not tail recursive
 STree
-insert_node(STree t, STree node)
+insert_node(STree t, Node* n)
 {
-  if (!t) return node;
-  if      (node->value == t->value) free(node);
-  else if (node->value <  t->value) t->left  = insert_node(t->left,  node);
-  else if (node->value >  t->value) t->right = insert_node(t->right, node);
+  if (!t) return n;
+  if      (n->value == t->value) free(n);
+  else if (n->value <  t->value) t->left  = insert_node(t->left,  n);
+  else if (n->value >  t->value) t->right = insert_node(t->right, n);
   return t;
 }
 
@@ -86,16 +86,16 @@ STree
 delete(STree t, int val)
 {
   if (!t) return t;
-  if      (val <  t->value) t->left  = delete(t->left,  val);
-  else if (val >  t->value) t->right = delete(t->right, val);
-  else                      { if (t->left && t->right) {
-                                t->value = rightmost_val(t->left);
-                                t->left  = delete(t->left, val);
-                              } else {  // ??? TODO ???
-                                STree subtree = t->left ? t->left : t->right;
-                                free(t);
-                                return subtree;
-                              }}
+  if      (val <  t->value)     t->left  = delete(t->left,  val);
+  else if (val >  t->value)     t->right = delete(t->right, val);
+  else /* (val == t->value) */  { if (t->left && t->right) {                      // both subtrees existant
+                                  t->value = rightmost_val(t->left);
+                                  t->left  = delete(t->left, t->value);
+                                } else {                                          // at most one subtree existant
+                                  STree subtree = t->left ? t->left : t->right;
+                                  free(t);
+                                  return subtree;
+                                }}
   return t;
 }
 

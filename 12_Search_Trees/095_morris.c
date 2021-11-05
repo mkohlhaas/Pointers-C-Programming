@@ -93,9 +93,9 @@ STree*
 find_loc(STree* tree, int val)
 {
   assert(tree);
-  if      (!*tree || (*tree)->value == val) return tree;
-  else if (val < (*tree)->value)            return find_loc(&(*tree)->left,  val);
-  else                                      return find_loc(&(*tree)->right, val);
+  if      (!*tree || val == (*tree)->value)     return tree;
+  else if           (val <  (*tree)->value)     return find_loc(&(*tree)->left,  val);
+  else           /* (val >  (*tree)->value) */  return find_loc(&(*tree)->right, val);
 }
 
 bool
@@ -246,69 +246,54 @@ main()
       leaf(6));
 #endif
 
-  printf("Original:\n");
+  printf("\33[38;5;206m========== Original ===========================\033[0m\n");
   STree t = EMPTY_STREE;
   insert(&t, 3);
   insert(&t, 2);
   insert(&t, 1);
   insert(&t, 6);
-
-  assert(contains(&t, 2));
-  assert(contains(&t, 1));
-  assert(contains(&t, 3));
+  assert( contains(&t,  2));
+  assert( contains(&t,  1));
+  assert( contains(&t,  3));
   assert(!contains(&t, 10));
-  assert(!contains(&t, 0));
-
+  assert(!contains(&t,  0));
   print_stree(&t);
 
-  printf("\n============================================================\n");
-
-  printf("Inserting 10 and 0:\n");
+  printf("\n\33[38;5;206m========== Inserting 10 and 0 =================\033[0m\n");
   insert(&t, 10);
-  insert(&t, 0);
+  insert(&t,  0);
   assert(contains(&t, 10));
-  assert(contains(&t, 0));
+  assert(contains(&t,  0));
   print_stree(&t);
 
-  printf("\n============================================================\n");
-
-  printf("Deleting 12, 3 and 6:\n");
+  printf("\n\33[38;5;206m========== Deleting 12, 6 and 3 ===============\033[0m\n");
   delete(&t, 12);
-  delete(&t, 3);
-  delete(&t, 6);
+  delete(&t,  3);
+  delete(&t,  6);
   assert(!contains(&t, 3));
   assert(!contains(&t, 6));
   print_stree(&t);
-
-  printf("\n============================================================\n");
-
   clear_stree(&t);
 
-  printf("Tree from array:\n");
+  printf("\n\33[38;5;206m========== Tree from array ====================\033[0m\n");
   int    array[] = { 1, 2, 13, 4, 16, 8, 10 };
   int    n       = sizeof array / sizeof *array;
   STree* t2      = make_stree(n, array);
   print_stree(t2);
 
-  printf("\n============================================================\n");
-
-  printf("Inorder:\n");
+  printf("\n\33[38;5;206m========== Inorder ============================\033[0m\n");
   inorder(*t2);
 
-  printf("\n============================================================\n");
-
-  printf("Morris:\n");
+  printf("\n\33[38;5;206m========== Morris =============================\033[0m\n");
   morris(t2);
 
-  printf("\n============================================================\n");
-
-  printf("Iterator:\n");
+  printf("\n\33[38;5;206m========== Iterator ===========================\033[0m\n");
   StreeIter iter = stree_iter(t2);
   Node*     node = NULL;
   while ((node = next_node(&iter))) printf("%d ", node->value);
   cleanup_iter(&iter);
 
-  printf("\n============================================================\n");
+  printf("\n\33[38;5;206m========== Free ===============================\033[0m\n");
 
   free_stree(t2);
   assert(t2 == NULL);
@@ -318,7 +303,7 @@ main()
   free_nodes(*t2);
   free(t2);
 
-  printf("\n============================================================\n");
+  printf("\n\33[38;5;206m===============================================\033[0m\n");
 
   printf("allocated = %d\n", allocated);
 }
