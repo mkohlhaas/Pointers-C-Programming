@@ -50,7 +50,7 @@ STree
 insert_node(STree t, Node* n)
 {
   if (!t) return n;
-  if      (n->value == t->value) free(n);
+  if      (n->value == t->value) free(n);                                         // cannot have several nodes of the same value; t unchanged
   else if (n->value <  t->value) t->left  = insert_node(t->left,  n);
   else if (n->value >  t->value) t->right = insert_node(t->right, n);
   return t;
@@ -88,10 +88,10 @@ delete(STree t, int val)
   if (!t) return t;
   if      (val <  t->value)     t->left  = delete(t->left,  val);
   else if (val >  t->value)     t->right = delete(t->right, val);
-  else /* (val == t->value) */  { if (t->left && t->right) {                      // both subtrees existant
+  else /* (val == t->value) */  { if (t->left && t->right) {                      // both subtrees exist
                                   t->value = rightmost_val(t->left);
                                   t->left  = delete(t->left, t->value);
-                                } else {                                          // at most one subtree existant
+                                } else {                                          // at most one subtree (0 or 1) exist
                                   STree subtree = t->left ? t->left : t->right;
                                   free(t);
                                   return subtree;
