@@ -39,9 +39,9 @@ contains(STree t, int val)
 // Not tail recursive, and we don't handle allocation errors
 STree insert(STree t, int val)
 {
-  if (!t)             return leaf(val); // can fail, but we don't handle it
-  if (val < t->value) t->left  = insert(t->left, val);
-  else                t->right = insert(t->right, val);
+  if      (!t)             return leaf(val);                                      // can fail, but we don't handle it
+  if      (val < t->value) t->left  = insert(t->left, val);
+  else if (val > t->value) t->right = insert(t->right, val);
   return t;
 }
 #else
@@ -91,7 +91,7 @@ delete(STree t, int val)
   else /* (val == t->value) */  { if (t->left && t->right) {                      // both subtrees exist
                                   t->value = rightmost_val(t->left);
                                   t->left  = delete(t->left, t->value);
-                                } else {                                          // at most one subtree (0 or 1) exist
+                                } else {                                          // at most one subtree (0 or 1) exists
                                   STree subtree = t->left ? t->left : t->right;
                                   free(t);
                                   return subtree;

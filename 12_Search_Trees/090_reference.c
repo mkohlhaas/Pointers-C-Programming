@@ -1,5 +1,5 @@
 // functions will now use STree* instead of STree
-// using a reference to STree allows us to mutate the tree in-place
+// using a reference to STree allows us to mutate the tree in-place instead of returning a new one
 
 #include <assert.h>
 #include <stdbool.h>
@@ -37,22 +37,24 @@ contains(STree* tp, int val)
 {
   assert(tp);
   STree t = *tp;
-  if      (!t)                  return false;
-  if      (val == t->value)     return true;
-  if      (val <  t->value)     return contains(&t->left, val);  // pass address of left subtree; same as &(t->left); (p. 385)
-  else /* (val >  t->value) */  return contains(&t->right, val);
+  if      (!t)                 return false;
+  else if (val <  t->value)    return contains(&t->left,  val);  // pass address of left subtree; same as &(t->left); (p. 385)
+  else if (val >  t->value)    return contains(&t->right, val);
+  else /* (val == t->value) */ return true;
 }
 
 // Tail recursive, and we handle errors
 // change tree in-place
+// returns true in case of successful insert (allocation of a new leaf could fail)
 bool
 insert(STree* target, int val)
 {
   assert(target);
   STree t = *target;
-  if      (!t)                 return !!(*target = leaf(val)); // result of expression is right-hand side - leaf(val)
-  else if (val < t->value)     return insert(&t->left,  val);  // we are passing addresses of heap-allocated nodes
-  else /* (val > t->value) */  return insert(&t->right, val);
+  if      (!t)                 return !!(*target = leaf(val));   // result of expression is right-hand side - leaf(val)
+  else if (val <  t->value)    return insert(&t->left,  val);
+  else if (val >  t->value)    return insert(&t->right, val);
+  else /* (val == t->value) */ return true;
 }
 
 STree*
@@ -74,17 +76,17 @@ free_nodes(STree t)
 }
 
 // t is STree*
-#define clear_stree(t)                                                         \
-  do {                                                                         \
-    free_nodes(*t);                                                            \
-    *t = EMPTY;                                                                \
+#define clear_stree(t)                                           \
+  do {                                                           \
+    free_nodes(*t);                                              \
+    *t = EMPTY;                                                  \
   } while (0)
 
-#define free_stree(t)                                                          \
-  do {                                                                         \
-    free_nodes(*t);                                                            \
-    free(t);                                                                   \
-    t = NULL;                                                                  \
+#define free_stree(t)                                            \
+  do {                                                           \
+    free_nodes(*t);                                              \
+    free(t);                                                     \
+    t = NULL;                                                    \
   } while (0)
 
 STree*
@@ -103,7 +105,7 @@ rightmost(STree* t)
 {
   assert(t && *t);
   if   (!(*t)->right) return t;
-  else                return rightmost(&(*t)->right);  // &(*t)->right = 1. deref t, 2. get right tree, 3. take address (p. 388)
+  else                return rightmost(&(*t)->right);            // &(*t)->right = 1. deref t, 2. get right tree, 3. take address (p. 388)
 }
 
 // Tail recursive
@@ -115,11 +117,11 @@ delete(STree* target, int val)
   if (!t) return;
   if      (val <  t->value)     delete(&t->left,  val);
   else if (val >  t->value)     delete(&t->right, val);
-  else /* (val == t->value) */  { if (!(t->left && t->right)) {                     // at most one of the subtrees is existant
+  else /* (val == t->value) */  { if (!(t->left && t->right)) {                     // at most one of the subtrees (0 or 1) exists
                                   STree   subtree = t->left ? t->left : t->right;
                                          *target  = subtree;
                                   free(t);
-                                } else {                                            // both subtrees existant
+                                } else {                                            // both subtrees exist
                                   STree* rm_ref   = rightmost(&t->left);
                                   STree  rm       = *rm_ref;
                                          t->value = rm->value;
@@ -149,11 +151,9 @@ int
 main()
 {
 #if 0
-  STree t =
-    node(3,
-      node(2, leaf(1), EMPTY),
-      leaf(6));
+  STree t = node(3, node(2, leaf(1), EMPTY), leaf(6));
 #endif
+
   printf("\33[38;5;206m========== Original ========================\033[0m\n");
   STree  t_ = EMPTY;
   STree* t  = &t_;
