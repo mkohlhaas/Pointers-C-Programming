@@ -14,6 +14,8 @@ p. 340: extern, static, inline, compilation unit
 Chapter_11_Doubly_linked_lists: link_before() in case of x,y being the dummy
 Chapter 11, doubly linked lists: 087_doubly-linked-lists.c
  - concatenate()
+Chapter_12/
+12_Search_Trees/090_reference.c: delete()
 Chapter_12/explicit-stack-embed.c: print_stree() -> &(*t)->left
 Chapter_12/096_parent.c
 Chapter_14/stree.c -> remove_node()

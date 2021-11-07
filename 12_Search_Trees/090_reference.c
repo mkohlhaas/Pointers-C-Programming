@@ -61,7 +61,7 @@ STree*
 new_stree()
 {
   STree*  t = malloc(sizeof *t);  // allocate memory for a pointer
-  if (t) *t = EMPTY;
+  if (t) *t = EMPTY;              // an empty tree is a pointer to a NULL pointer
   return  t;
 }
 
@@ -117,7 +117,7 @@ delete(STree* target, int val)
   if (!t) return;
   if      (val <  t->value)     delete(&t->left,  val);
   else if (val >  t->value)     delete(&t->right, val);
-  else /* (val == t->value) */  { if (!(t->left && t->right)) {                     // at most one of the subtrees (0 or 1) exists
+  else /* (val == t->value) */  { if (!(t->left && t->right)) {                     // at most one of the subtrees (0 or 1) exist
                                   STree   subtree = t->left ? t->left : t->right;
                                          *target  = subtree;
                                   free(t);
@@ -182,7 +182,7 @@ main()
   print_stree(t);
   assert(!contains(t, 3));
   assert(!contains(t, 6));
-  clear_stree(t); // not free_stree; the pointer itself(=t) is on the stack
+  clear_stree(t); // not free_stree; the pointer itself (i.e. t) is on the stack
 
   printf("\n\33[38;5;206m========== Tree from array =================\033[0m\n");
   int array[] = { 1, 2, 3, 4, 6, 8, 10 };
