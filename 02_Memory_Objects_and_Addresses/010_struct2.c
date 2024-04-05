@@ -1,15 +1,12 @@
 #include <stdalign.h>
 #include <stdio.h>
 
-typedef struct data
-{
-  int  i;
+typedef struct data {
+  int i;
   char c[9];
 } Data;
 
-int
-main()
-{
+int main() {
   printf("sizeof components    = %zu\n", sizeof(char[9]) + sizeof(int));
   printf("sizeof Data          = %zu\n", sizeof(Data));
   printf("alignof Data         = %zu\n", alignof(Data));

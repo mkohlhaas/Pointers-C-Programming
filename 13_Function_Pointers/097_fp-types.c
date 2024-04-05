@@ -3,11 +3,7 @@
 void f(void) {}
 void (*fp)(void) = f;
 
-double
-g(int x, float y)
-{
-  return x + y;
-}
+double g(int x, float y) { return x + y; }
 
 double (*gp)(int, float) = &g;
 
@@ -17,33 +13,24 @@ double (*gp)(int, float) = &g;
 // These do not work:
 // void (complex(int x, int (*p)(int)))(void)
 // void  complex(int x, int (*p)(int))(void)
-void (*complex(int x, int (*p)(int)))(void)
-{
+void (*complex(int x, int (*p)(int)))(void) {
   printf("%d\n", p(x));
   return f;
 }
 
 // typedefs: put the type name where you would put the pointer name
 typedef void (*VoidFn)(void);
-typedef int  (*IntFn)(int);
+typedef int (*IntFn)(int);
 
-VoidFn
-simple(int x, IntFn p)
-{
+VoidFn simple(int x, IntFn p) {
   printf("%d\n", p(x));
   return f;
 }
 
 // h has type IntFn
-int
-h(int x)
-{
-  return 2 * x;
-}
+int h(int x) { return 2 * x; }
 
-int
-main()
-{
+int main() {
   IntFn fp1;
   fp1 = h;
   // cast
@@ -53,10 +40,10 @@ main()
   // and back again
   printf("%d\n", fp1(1));
 
-  // address or not? doesn't matter ... 
+  // address or not? doesn't matter ...
   fp = f;
   fp();
-  fp = &f;  // use a function as a pointer and it becomes a pointer; like arrays
+  fp = &f; // use a function as a pointer and it becomes a pointer; like arrays
   fp();
 
   gp = g;
@@ -70,6 +57,6 @@ main()
   void (*fp3)(void) = fp;
   fp3();
 
-  simple (42, h);
+  simple(42, h);
   complex(42, h);
 }

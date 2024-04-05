@@ -4,32 +4,24 @@
 #include <assert.h>
 
 // 'A' BECOMES: int (*)[10]
-void
-array_full_size(int A[10][10])
-{
+void array_full_size(int A[10][10]) {
   // uncomment to see type of A
   // struct S* s = A;
 }
 
 // 'A' BECOMES: int (*)[10]
-void
-array_incomplete_size(int A[][10])
-{
+void array_incomplete_size(int A[][10]) {
   // uncomment to see type of A
   // struct S* s = A;
 }
 
 // 'A' IS EXPLICITLY: int (*)[10]
-void
-pointer(int (*A)[10])
-{
+void pointer(int (*A)[10]) {
   // uncomment to see type of A
   // struct S* s = A;
 }
 
-int
-main()
-{
+int main() {
   {
     int A[10][10];
     array_full_size(A);
@@ -48,8 +40,8 @@ main()
   {
     // You get warnings here, because the second dimension doesn't match
     int C[10][5];
-    array_full_size(C);        // W
-    array_incomplete_size(C);  // W
-    pointer(C);                // W
+    array_full_size(C);       // W
+    array_incomplete_size(C); // W
+    pointer(C);               // W
   }
 }

@@ -4,18 +4,16 @@
 #include <string.h>
 #include <sys/mman.h>
 
-void*
-alloc_code_bock(size_t size)
-{
+void *alloc_code_bock(size_t size) {
   // allocate page-aligned memory with mmap():
-  char* buf = mmap(0, size, PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-  if   (buf == MAP_FAILED) return NULL; // NULL for error
-  else                     return buf;
+  char *buf = mmap(0, size, PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+  if (buf == MAP_FAILED)
+    return NULL; // NULL for error
+  else
+    return buf;
 }
 
-void*
-set_exec_prot(void* buf, size_t size)
-{
+void *set_exec_prot(void *buf, size_t size) {
   int res = mprotect(buf, size, PROT_READ | PROT_EXEC);
   if (res == -1) {
     // munmap can fail, but there is nothing we can do about it here...
@@ -25,9 +23,7 @@ set_exec_prot(void* buf, size_t size)
   return buf;
 }
 
-void
-free_code_block(void* buf, size_t size)
-{
+void free_code_block(void *buf, size_t size) {
   // munmap can fail, but there is nothing we
   // can do about it here...
   munmap(buf, size);
@@ -47,7 +43,7 @@ free_code_block(void* buf, size_t size)
 #define CODE_PTR_MASK (~CODE_SIZE_MASK)
 
 #include <stdint.h>
-#define jit_ptr(f, s) (void*)((uint64_t)f | s)
+#define jit_ptr(f, s) (void *)((uint64_t)f | s)
 #define jit_pages(p) ((uint64_t)p & CODE_SIZE_MASK)
 // using compiler extension __typeof__ for cast
 #define jit_func(p) ((__typeof__(p))((uint64_t)p & CODE_PTR_MASK))
@@ -60,11 +56,10 @@ free_code_block(void* buf, size_t size)
 #define CODE_SIZE_MASK (~CODE_PTR_MASK)
 
 #include <stdint.h>
-#define jit_ptr(f, s) (void*)(((uint64_t)f & CODE_PTR_MASK) | (s << 48))
+#define jit_ptr(f, s) (void *)(((uint64_t)f & CODE_PTR_MASK) | (s << 48))
 #define jit_pages(p) (((uint64_t)p & CODE_SIZE_MASK) >> 48)
 
-#define upper_bits(p)                                                          \
-  ~(((uint64_t)p & (1ull << 47)) - 1) // upper 16 set if 47 set
+#define upper_bits(p) ~(((uint64_t)p & (1ull << 47)) - 1) // upper 16 set if 47 set
 #define lower_bits(p) ((uint64_t)p & CODE_PTR_MASK)
 #define canonical_ptr(p) (lower_bits(p) | upper_bits(p))
 
@@ -74,16 +69,10 @@ free_code_block(void* buf, size_t size)
 #endif
 
 // to avoid function/void pointer warnings
-#define jit_free(p) jit_free_void((void*)(p))
-void
-jit_free_void(void* p)
-{
-  free_code_block((void*)jit_func(p), jit_pages(p));
-}
+#define jit_free(p) jit_free_void((void *)(p))
+void jit_free_void(void *p) { free_code_block((void *)jit_func(p), jit_pages(p)); }
 
-void*
-create_exec_buf(unsigned char const* code, size_t size)
-{
+void *create_exec_buf(unsigned char const *code, size_t size) {
   size_t pages = (size + PAGESIZE - 1) / PAGESIZE;
   if (pages > MAX_CODE_PAGES) {
     // some meaningful error handling here...
@@ -94,90 +83,78 @@ create_exec_buf(unsigned char const* code, size_t size)
   size_t alloc_size = PAGESIZE * pages;
 
   // allocate page-aligned memory with mmap():
-  char* buf = alloc_code_bock(alloc_size);
-  if (!buf) return NULL;
+  char *buf = alloc_code_bock(alloc_size);
+  if (!buf)
+    return NULL;
   memcpy(buf, code, size);
   buf = set_exec_prot(buf, alloc_size);
-  if (!buf) return NULL;
+  if (!buf)
+    return NULL;
   return jit_ptr(buf, pages);
 }
 
 // Example functions------------------------------------------
 typedef int (*ii_fn)(int);
 
-ii_fn
-adder(int j) // will make int f(int x) { return x + j; }
+ii_fn adder(int j) // will make int f(int x) { return x + j; }
 {
-  unsigned char code[] = { // lea eax,[rdi+<j>] (0x87 because we use 32-bit int
-                           // now) j starts at index 2...
-                           0x8d,
-                           0x87,
-                           0x00,
-                           0x00,
-                           0x00,
-                           0x00,
-                           // ret
-                           0xc3
-  };
+  unsigned char code[] = {// lea eax,[rdi+<j>] (0x87 because we use 32-bit int
+                          // now) j starts at index 2...
+                          0x8d, 0x87, 0x00, 0x00, 0x00, 0x00,
+                          // ret
+                          0xc3};
   // the int starts at index 2 and goes in the next four
   // bytes, little endian...
-  unsigned char* j_code = code + 2;
-  for (int offset = 0; offset < 4; offset++) j_code[offset] = (j >> 8 * offset) & 0xff;
+  unsigned char *j_code = code + 2;
+  for (int offset = 0; offset < 4; offset++)
+    j_code[offset] = (j >> 8 * offset) & 0xff;
 
   return (ii_fn)create_exec_buf(code, sizeof code);
 }
 
 typedef int (*iii_fn)(int, int);
 
-iii_fn
-add_mod_k(int k) // int f(int x, int y) { return (x + y) % k; }
+iii_fn add_mod_k(int k) // int f(int x, int y) { return (x + y) % k; }
 {
   assert(k > 0);
   unsigned char code[] = {
-    // add the two arguments
-    0x8d,
-    0x04,
-    0x37, // lea    eax,[rdi+rsi*1]
+      // add the two arguments
+      0x8d, 0x04,
+      0x37, // lea    eax,[rdi+rsi*1]
 
-    // clear divident
-    0xba,
-    0x00,
-    0x00,
-    0x00,
-    0x00, // mov    edx, 0x0
+      // clear divident
+      0xba, 0x00, 0x00, 0x00,
+      0x00, // mov    edx, 0x0
 
-    // divide eax by edi
-    // (k starts at offset 9)
-    0xb9,
-    0x00,
-    0x00,
-    0x00,
-    0x00, // mov    edi,<k>
-    0xf7,
-    0xf1, // div    ecx
+      // divide eax by edi
+      // (k starts at offset 9)
+      0xb9, 0x00, 0x00, 0x00,
+      0x00, // mov    edi,<k>
+      0xf7,
+      0xf1, // div    ecx
 
-    // remainder (in edx) to eax register
-    0x89,
-    0xd0, // mov    eax,edx
-    // and return...
-    0xc3 // ret
+      // remainder (in edx) to eax register
+      0x89,
+      0xd0, // mov    eax,edx
+      // and return...
+      0xc3 // ret
   };
 
   // the int starts at index 2 and goes in the next four
   // bytes, little endian...
-  unsigned char* k_code = code + 9;
-  for (int offset = 0; offset < 4; offset++) k_code[offset] = (k >> 8 * offset) & 0xff;
+  unsigned char *k_code = code + 9;
+  for (int offset = 0; offset < 4; offset++)
+    k_code[offset] = (k >> 8 * offset) & 0xff;
 
   return (iii_fn)create_exec_buf(code, sizeof code);
 }
 
-int
-main()
-{
+int main() {
   // Using a structure wrapper
   ii_fn add2 = adder(2);
   ii_fn add5 = adder(5);
-  for (int i = 0; i < 5; i++) printf("%d, %d, %d\n", i, jit_func(add2)(i), jit_func(add5)(i));
+  for (int i = 0; i < 5; i++)
+    printf("%d, %d, %d\n", i, jit_func(add2)(i), jit_func(add5)(i));
   jit_free(add2);
   jit_free(add5);
 
@@ -185,11 +162,7 @@ main()
   iii_fn add_mod5 = add_mod_k(5);
   for (int i = 0; i < 5; i++) {
     for (int j = 0; j < 5; j++) {
-      printf("(%d + %d) mod k = %d (k=2) %d (k=5)\n",
-              i,
-              j,
-              jit_func(add_mod2)(i, j),
-              jit_func(add_mod5)(i, j));
+      printf("(%d + %d) mod k = %d (k=2) %d (k=5)\n", i, j, jit_func(add_mod2)(i, j), jit_func(add_mod5)(i, j));
     }
   }
   jit_free(add_mod2);

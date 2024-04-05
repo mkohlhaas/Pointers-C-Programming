@@ -1,12 +1,10 @@
-#include <stdio.h>
 #include "substr.h"
+#include <stdio.h>
 
-int
-main()
-{
+int main() {
   {
-    char   x[] = "abc";
-    Substr y   = as_substr(x);
+    char x[] = "abc";
+    Substr y = as_substr(x);
     printf("%p %c, %p %c\n", y.begin, *y.begin, y.end, *y.end);
   }
 

@@ -6,39 +6,33 @@
 // immutable list link
 typedef struct link Link;
 
-typedef struct link
-{
-  int          refcount;
-  int   const  value;
-  Link* const  next;
+typedef struct link {
+  int refcount;
+  int const value;
+  Link *const next;
 } Link;
 
-typedef Link* List;
+typedef Link *List;
 
 // x is a List
-Link    NIL_LINK  = { .refcount = 1 };
+Link NIL_LINK = {.refcount = 1};
 #define is_error(x) ((x) == NULL)
-#define is_nil(x)   ((x) == &NIL_LINK)
-#define NIL          incref(&NIL_LINK)
+#define is_nil(x) ((x) == &NIL_LINK)
+#define NIL incref(&NIL_LINK)
 
-Link*
-incref(Link* link)
-{
+Link *incref(Link *link) {
   link->refcount++;
   return link;
 }
 
-void free_link(Link* link);
+void free_link(Link *link);
 
-void
-decref(Link* link)
-{
-  if (link && --link->refcount == 0) free_link(link);
+void decref(Link *link) {
+  if (link && --link->refcount == 0)
+    free_link(link);
 }
 
-void
-free_link(Link* link)
-{
+void free_link(Link *link) {
   decref(link->next);
   free(link);
 }
@@ -54,36 +48,33 @@ free_link(Link* link)
 
 #if 0
 // GCC compiler extension statement-expression for give()
-#define give(x)                                                                \
-  ({                                                                           \
-    void* p = x;                                                               \
-    x       = NULL;                                                            \
-    p;                                                                         \
+#define give(x)                                                                                                        \
+  ({                                                                                                                   \
+    void *p = x;                                                                                                       \
+    x = NULL;                                                                                                          \
+    p;                                                                                                                 \
   })
 #endif
 
-List
-new_link(int head, takes List tail)
-{
-  if (is_error(tail)) return NULL;
+List new_link(int head, takes List tail) {
+  if (is_error(tail))
+    return NULL;
 
   List link = malloc(sizeof *link);
   if (!link) {
-    decref(tail);  // new_link() owns tail and has to decref() it
+    decref(tail); // new_link() owns tail and has to decref() it
     return NULL;
   }
 
-  Link link_data = { .refcount = 1,
-                     .next     = give(tail), // gives away the reference to the link
-                     .value    = head };
+  Link link_data = {.refcount = 1,
+                    .next = give(tail), // gives away the reference to the link
+                    .value = head};
   // getting around const'ness of value and next by memcpy'ing
   memcpy(link, &link_data, sizeof *link);
   return give(link);
 }
 
-void
-print_list(borrows List x)
-{
+void print_list(borrows List x) {
   printf("[ ");
   while (!is_nil(x)) {
     printf("%d[%d] ", x->value, x->refcount);
@@ -107,17 +98,15 @@ int length_rec(borrows list x, int acc)
 
 #else
 
-int
-length_rec(takes List x, int acc)
-{
+int length_rec(takes List x, int acc) {
   assert(!is_error(x));
   if (is_nil(x)) {
-    decref(x);  // decref a taken list - in this case the empty list (NIL-LINK) - before returning
+    decref(x); // decref a taken list - in this case the empty list (NIL-LINK) - before returning
     return acc;
   } else {
-    Link* next = incref(x->next);  // we need a reference to x->next as we will pass ownership in recursive call
-    decref(x);  // same here
-    return length_rec(give(next), acc + 1);  // pass ownership of next
+    Link *next = incref(x->next); // we need a reference to x->next as we will pass ownership in recursive call
+    decref(x);                    // same here
+    return length_rec(give(next), acc + 1); // pass ownership of next
   }
 }
 #define length(x) length_rec(x, 0)
@@ -144,20 +133,18 @@ list reverse_rec(borrows list x, borrows list acc)
 
 #else
 
-List
-reverse_rec(takes List x, takes List acc)
-{
+List reverse_rec(takes List x, takes List acc) {
   if (is_error(x) || is_error(acc)) {
-    decref(x);    // decref taken lists
+    decref(x); // decref taken lists
     decref(acc);
     return NULL;
   }
   if (is_nil(x)) {
-    decref(x);  // we don't give away x so we must decref it as we are the owner
+    decref(x); // we don't give away x so we must decref it as we are the owner
     return give(acc);
   } else {
-    int   value = x->value;
-    Link* next  = incref(x->next);
+    int value = x->value;
+    Link *next = incref(x->next);
     decref(x);
     return reverse_rec(give(next), new_link(value, acc));
   }
@@ -183,9 +170,7 @@ list concat(borrows list x, borrows list y)
 
 #else
 
-List
-concat(takes List x, takes List y)
-{
+List concat(takes List x, takes List y) {
   if (is_error(x) || is_error(y)) {
     decref(x);
     decref(y);
@@ -195,8 +180,8 @@ concat(takes List x, takes List y)
     decref(x);
     return give(y);
   } else {
-    int   value = x->value;
-    Link* next  = incref(x->next);
+    int value = x->value;
+    Link *next = incref(x->next);
     decref(x);
     return new_link(value, concat(give(next), give(y)));
   }
@@ -204,9 +189,7 @@ concat(takes List x, takes List y)
 
 #endif
 
-int
-main()
-{
+int main() {
   printf("Construction:\n");
   printf("-------------\n");
   List x = new_link(1, new_link(2, new_link(3, NIL)));

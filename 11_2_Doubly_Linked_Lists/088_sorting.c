@@ -3,12 +3,11 @@
 #include <stdio.h>
 #include <time.h>
 
-bool
-is_sorted(List x)
-{
-  Link* p = front(x);
+bool is_sorted(List x) {
+  Link *p = front(x);
   while (p->next != x) {
-    if (p->value > p->next->value) return false;
+    if (p->value > p->next->value)
+      return false;
     p = p->next;
   }
   return true;
@@ -16,9 +15,7 @@ is_sorted(List x)
 
 // move y to x; new x == old y
 // all previous items in x are deleted; y is emptied
-void
-move_links(List x, List y)
-{
+void move_links(List x, List y) {
   free_links(x);
   if (!is_empty(y)) {
     *x = *y;
@@ -33,25 +30,22 @@ move_links(List x, List y)
 // 3. Append it to sorted/resultant list (initially empty)
 // 4. Move sorted list to original list
 
-Link*
-get_smallest(List x)
-{
+Link *get_smallest(List x) {
   assert(!is_empty(x));
-  Link* p   = front(x);
-  Link* res = p;
+  Link *p = front(x);
+  Link *res = p;
   while (p != x) {
-    if (p->value < res->value) res = p;
+    if (p->value < res->value)
+      res = p;
     p = p->next;
   }
   return res;
 }
 
-void
-selection_sort(List x)
-{
+void selection_sort(List x) {
   ListHead sorted = init_list_head(sorted);
   while (!is_empty(x)) {
-    Link* smallest = get_smallest(x);
+    Link *smallest = get_smallest(x);
     unlink(smallest);
     append_link(&sorted, smallest);
   }
@@ -72,11 +66,10 @@ void insert_sorted(list x, link *link)
 }
 #else
 // Insert from the end; this is stable -> preserve the order of links with the same value
-void
-insert_sorted(List x, Link* link)
-{
-  Link* p = last(x);
-  while (p != x && p->value > link->value) p = p->prev;
+void insert_sorted(List x, Link *link) {
+  Link *p = last(x);
+  while (p != x && p->value > link->value)
+    p = p->prev;
   link_after(p, link);
 }
 #endif
@@ -96,12 +89,10 @@ void insertion_sort(List x)
   move_links(x, &sorted);
 }
 #else
-void
-insertion_sort(List x)
-{
+void insertion_sort(List x) {
   ListHead sorted = init_list_head(sorted);
   while (!is_empty(x)) {
-    Link* p = front(x);
+    Link *p = front(x);
     unlink(p);
     insert_sorted(&sorted, p);
   }
@@ -140,46 +131,41 @@ void merge(List x, List y)
 }
 #else
 // merge result into x
-void
-merge(List x, List y)
-{
+void merge(List x, List y) {
   ListHead merged = init_list_head(merged);
   while (!is_empty(x) && !is_empty(y)) {
-    Link* smallest = (front(x)->value < front(y)->value) ? front(x) : front(y);
+    Link *smallest = (front(x)->value < front(y)->value) ? front(x) : front(y);
     unlink(smallest);
     append_link(&merged, smallest);
   }
-  concatenate(&merged, x);  // append left-overs
-  concatenate(&merged, y);  // also clears y
+  concatenate(&merged, x); // append left-overs
+  concatenate(&merged, y); // also clears y
   move_links(x, &merged);
 }
 #endif
 
 #if 1
-void
-split_list(List x, List y)
-{
+void split_list(List x, List y) {
   assert(is_empty(y));
-  Link* p = front(x);
+  Link *p = front(x);
   while (p != x) {
-    Link* q = p->next;   // take every other link
-    if (q == x) return;
+    Link *q = p->next; // take every other link
+    if (q == x)
+      return;
     unlink(p);
     append_link(y, p);
     p = q->next;
   }
 }
 #else
-void
-split_list(List x, List y)
-{
+void split_list(List x, List y) {
   assert(is_empty(y));
 
   ListHead z = init_list_head(z);
   bool flag = true;
   while (!is_empty(x)) {
     List target = ((flag = !flag)) ? y : &z;
-    Link* p = front(x);
+    Link *p = front(x);
     unlink(p);
     append_link(target, p);
   }
@@ -187,10 +173,9 @@ split_list(List x, List y)
 }
 #endif
 
-void
-merge_sort(List x)
-{
-  if (is_empty(x) || front(x)->next == x) return; // length zero or one-item lists are sorted by definition
+void merge_sort(List x) {
+  if (is_empty(x) || front(x)->next == x)
+    return; // length zero or one-item lists are sorted by definition
 
   ListHead y = init_list_head(y);
   split_list(x, &y);
@@ -205,13 +190,11 @@ merge_sort(List x)
 // 3. Append both lists
 
 // move all items > pivot in x to y (initially empty)
-void
-partition(List x, List y, int pivot)
-{
+void partition(List x, List y, int pivot) {
   assert(is_empty(y));
-  Link* p = front(x);
+  Link *p = front(x);
   while (p != x) {
-    Link* next = p->next;
+    Link *next = p->next;
     if (p->value > pivot) {
       unlink(p);
       append_link(y, p);
@@ -220,18 +203,17 @@ partition(List x, List y, int pivot)
   }
 }
 
-void
-quick_sort(List x)
-{
-  if (is_empty(x) || front(x)->next == x) return; // length zero or one lists are sorted
+void quick_sort(List x) {
+  if (is_empty(x) || front(x)->next == x)
+    return; // length zero or one lists are sorted
 
   // remove the pivot, to make sure that we reduce the problem size on each recursion!
   // If the pivot is the largest element in the list, e.g., all the elements are less than
   // or equal to it. Then we would recurse on the original data, entering an infinite recursion.
-  Link* first = front(x);
+  Link *first = front(x);
   unlink(first);
-  int      pivot = first->value;
-  ListHead y     = init_list_head(y);
+  int pivot = first->value;
+  ListHead y = init_list_head(y);
   partition(x, &y, pivot);
   quick_sort(x);
   quick_sort(&y);
@@ -241,31 +223,31 @@ quick_sort(List x)
 
 // Testing --------------------------------------------------
 
-List
-random_list(int n)
-{
+List random_list(int n) {
   List x = new_list();
-  if (!x) abort();
+  if (!x)
+    abort();
 
   for (int i = 0; i < n; i++)
-    if (!append(x, rand() % 10)) abort();
+    if (!append(x, rand() % 10))
+      abort();
   return x;
 }
 
-void
-test_sorting(int n)
-{
+void test_sorting(int n) {
   typedef void (*SortFn_)(List);
 
   typedef struct sort_fn {
-	  SortFn_ sort_fun;
-	  char*   sort_name;
+    SortFn_ sort_fun;
+    char *sort_name;
   } SortFn;
 
-  SortFn sort_funs[] = { { selection_sort, "Selection " },
-                         { insertion_sort, "Insertion " },
-                         { merge_sort,     "Merge     " },
-                         { quick_sort,     "Quick     " }, };
+  SortFn sort_funs[] = {
+      {selection_sort, "Selection "},
+      {insertion_sort, "Insertion "},
+      {merge_sort, "Merge     "},
+      {quick_sort, "Quick     "},
+  };
 
   size_t n_funs = sizeof sort_funs / sizeof *sort_funs;
 
@@ -286,9 +268,7 @@ test_sorting(int n)
   free_list(x);
 }
 
-int
-main()
-{
+int main() {
   unsigned random_seed;
   FILE *fp = fopen("/dev/urandom", "r");
   fread(&random_seed, sizeof random_seed, 1, fp);

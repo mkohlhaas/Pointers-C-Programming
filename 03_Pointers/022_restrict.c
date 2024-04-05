@@ -11,23 +11,17 @@
 
 #include <stdio.h>
 
-void
-abc(int* a, int* b, int* c)
-{
+void abc(int *a, int *b, int *c) {
   *a += *c;
   *b += *c;
 }
 
-void
-abc_restrict(int* a, int* b, int* restrict c)
-{
+void abc_restrict(int *a, int *b, int *restrict c) {
   *a += *c;
   *b += *c;
 }
 
-int
-main()
-{
+int main() {
   int x, y;
   x = y = 13;
   // No problem here. We haven't made any restrict promises

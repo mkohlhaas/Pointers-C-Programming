@@ -1,11 +1,9 @@
+#include "substr.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "substr.h"
 
-int
-main()
-{
+int main() {
   {
     printf("----- 1 -----\n");
     char w[] = "foobar";
@@ -26,8 +24,8 @@ main()
     assert(substr_len(z) == 3); // bar is still there
     assert(substr_cmp(z, as_substr("bar")) == 0);
     assert(strcmp(w, "barbar") == 0);
-    printf("%s\n", w);          // barbar
-    print_substr(z);            // bar
+    printf("%s\n", w); // barbar
+    print_substr(z);   // bar
     printf("\n");
   }
 
@@ -39,7 +37,7 @@ main()
     Substr z = copy_substr(x, y);
     assert(substr_len(z) == 0); // we filled the input
     assert(strcmp(w, "baobar") == 0);
-    printf("%s\n", w);          // baobar
+    printf("%s\n", w); // baobar
   }
 
   {
@@ -50,7 +48,7 @@ main()
     Substr z = copy_substr(x, y);
     assert(substr_len(z) == 0); // we filled the input
     assert(strcmp(w, "oobbar") == 0);
-    printf("%s\n", w);          // oobbar
+    printf("%s\n", w); // oobbar
   }
 
   {
@@ -61,7 +59,7 @@ main()
     Substr z = copy_substr(x, y);
     assert(substr_len(z) == 0); // we filled the input
     assert(strcmp(w, "ffooar") == 0);
-    printf("%s\n", w);          // ffooar
+    printf("%s\n", w); // ffooar
   }
 
   {

@@ -6,20 +6,16 @@
 
 #include <stdio.h>
 
-void
-foo(int const* cip)
-{
-  int* ip;
-   ip = (int*)cip;
+void foo(int const *cip) {
+  int *ip;
+  ip = (int *)cip;
   *ip = 5;
 }
 
-int
-main()
-{
-  int const i  = 42;
-  int*      ip = (int*)&i;
-           *ip = 13;
+int main() {
+  int const i = 42;
+  int *ip = (int *)&i;
+  *ip = 13;
   // i == 42 or i == 13?
   // Depends on optimization level of compiler!
   printf("i = %2d, *ip = %2d\n", i, *ip);

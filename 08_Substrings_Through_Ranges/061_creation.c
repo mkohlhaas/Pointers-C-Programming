@@ -1,23 +1,23 @@
+#include "substr.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "substr.h"
 
-int
-main()
-{
+int main() {
   {
-    char* string = "";
+    char *string = "";
     assert(is_empty_substr(as_substr(string)));
   }
 
   {
-    char buf[]    = "foobarbaz";
+    char buf[] = "foobarbaz";
     Substr string = as_substr(buf);
-    Substr bar    = slice(buf, 3, 6);
+    Substr bar = slice(buf, 3, 6);
 
-    print_substr(string); putchar('\n');
-    print_substr(bar);    putchar('\n');
+    print_substr(string);
+    putchar('\n');
+    print_substr(bar);
+    putchar('\n');
 
     printf("my favorite string is \"%s\"\n", string.begin);
 
@@ -33,8 +33,8 @@ main()
   }
 
   {
-    char   s[] = "foobarbaz";
-    Substr ss  = as_substr(s);
+    char s[] = "foobarbaz";
+    Substr ss = as_substr(s);
     printf("%zu %zu\n", strlen(s), substr_len(ss));
 
     printf("slicing \"");

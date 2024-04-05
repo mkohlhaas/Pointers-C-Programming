@@ -5,60 +5,54 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct node  Node;
-typedef        Node* STree;
+typedef struct node Node;
+typedef Node *STree;
 
-typedef struct node
-{
-  int   value;
+typedef struct node {
+  int value;
   STree left;
   STree right;
 } Node;
 
 #define EMPTY_STREE NULL
-#define EMPTY_NODE  NULL
+#define EMPTY_NODE NULL
 
 int allocated;
 
-STree
-node(int value, STree left, STree right)
-{
+STree node(int value, STree left, STree right) {
   STree t = malloc(sizeof *t);
   if (t) {
     allocated++;
-    *t = (Node){ .value = value, .left = left, .right = right };
+    *t = (Node){.value = value, .left = left, .right = right};
   }
   return t;
 }
 
 #define leaf(value) node(value, EMPTY_STREE, EMPTY_STREE)
 
-STree*
-new_stree(void)
-{
-  STree*  t = malloc(sizeof *t);
-  if (t) *t = NULL;
-  return  t;
+STree *new_stree(void) {
+  STree *t = malloc(sizeof *t);
+  if (t)
+    *t = NULL;
+  return t;
 }
 
-STree*
-rightmost_to(STree* tree, Node* n)
-{
+STree *rightmost_to(STree *tree, Node *n) {
   assert(tree && *tree);
-  if   ((*tree)->right == NULL || (*tree)->right == n)  return tree; // there is no right subtree or we have been here before
-  else                                                  return rightmost_to(&(*tree)->right, n);
+  if ((*tree)->right == NULL || (*tree)->right == n)
+    return tree; // there is no right subtree or we have been here before
+  else
+    return rightmost_to(&(*tree)->right, n);
 }
 
 #define rightmost(t) rightmost_to(t, EMPTY_NODE)
 
 // cp. with 092_iterative.c
-void
-free_nodes(Node* n)
-{
-  Node* curr = n;
+void free_nodes(Node *n) {
+  Node *curr = n;
   while (curr) {
     if (!curr->left) {
-      Node* right = curr->right;
+      Node *right = curr->right;
       free(curr);
       allocated--;
       curr = right;
@@ -66,55 +60,51 @@ free_nodes(Node* n)
       // Add pointer so we can go back
       (*rightmost(&curr->left))->right = curr;
       // Recurse left, but make sure we never go left again
-      Node* left       = curr->left;
-            curr->left = EMPTY_NODE;  // never recurse into the left subtree again
-            curr       = left;
+      Node *left = curr->left;
+      curr->left = EMPTY_NODE; // never recurse into the left subtree again
+      curr = left;
     }
   }
 }
 
 // t is STree*
-#define clear_stree(t)                                                         \
-  do {                                                                         \
-    free_nodes(*t);                                                            \
-    *t = EMPTY_STREE;                                                          \
+#define clear_stree(t)                                                                                                 \
+  do {                                                                                                                 \
+    free_nodes(*t);                                                                                                    \
+    *t = EMPTY_STREE;                                                                                                  \
   } while (0)
 
 // t is STree*
-#define free_stree(t)                                                          \
-  do {                                                                         \
-    free_nodes(*t);                                                            \
-    free(t);                                                                   \
-    t = NULL;                                                                  \
+#define free_stree(t)                                                                                                  \
+  do {                                                                                                                 \
+    free_nodes(*t);                                                                                                    \
+    free(t);                                                                                                           \
+    t = NULL;                                                                                                          \
   } while (0)
 
 // tail recursive
-STree*
-find_loc(STree* tree, int val)
-{
+STree *find_loc(STree *tree, int val) {
   assert(tree);
-  if      (!*tree || val == (*tree)->value)     return tree;
-  else if           (val <  (*tree)->value)     return find_loc(&(*tree)->left,  val);
-  else           /* (val >  (*tree)->value) */  return find_loc(&(*tree)->right, val);
+  if (!*tree || val == (*tree)->value)
+    return tree;
+  else if (val < (*tree)->value)
+    return find_loc(&(*tree)->left, val);
+  else /* (val >  (*tree)->value) */
+    return find_loc(&(*tree)->right, val);
 }
 
-bool
-contains(STree* tree, int val)
-{
-  return !!*find_loc(tree, val);
+bool contains(STree *tree, int val) { return !!*find_loc(tree, val); }
+
+bool insert(STree *tree, int val) {
+  STree *target = find_loc(tree, val);
+  if (*target)
+    return true; // already there
+  else
+    return !!(*target = leaf(val));
 }
 
-bool
-insert(STree* tree, int val)
-{
-  STree* target = find_loc(tree, val);
-  if   (*target) return true; // already there
-  else           return !!(*target = leaf(val));
-}
-
-void delete(STree* tree, int val)
-{
-  STree* target = find_loc(tree, val);
+void delete(STree *tree, int val) {
+  STree *target = find_loc(tree, val);
   if (*target) {
     STree t = *target;
     if (!(t->left && t->right)) {
@@ -122,30 +112,30 @@ void delete(STree* tree, int val)
       free(t);
       allocated--;
     } else {
-      STree* rm_ref   = rightmost(&t->left);
-      STree  rm       = *rm_ref;
-             t->value = rm->value;
-             *rm_ref  = rm->left;
+      STree *rm_ref = rightmost(&t->left);
+      STree rm = *rm_ref;
+      t->value = rm->value;
+      *rm_ref = rm->left;
       free(rm);
       allocated--;
     }
   }
 }
 
-STree*
-make_stree(int n, int array[n])
-{
-  STree* t = new_stree();
-  if (!t) return NULL;
+STree *make_stree(int n, int array[n]) {
+  STree *t = new_stree();
+  if (!t)
+    return NULL;
   for (int i = 0; i < n; i++)
-    if (!insert(t, array[i])) { free_stree(t); return NULL; }
+    if (!insert(t, array[i])) {
+      free_stree(t);
+      return NULL;
+    }
   return t;
 }
 
 // Not tail recursive
-void
-print_stree(STree* tree)
-{
+void print_stree(STree *tree) {
   if (!*tree)
     putchar('_');
   else {
@@ -159,18 +149,15 @@ print_stree(STree* tree)
   }
 }
 
-void
-inorder(Node* n)
-{
-  if (!n) return;
+void inorder(Node *n) {
+  if (!n)
+    return;
   inorder(n->left);
   printf("%d ", n->value);
   inorder(n->right);
 }
 
-void
-morris(STree* tree)
-{
+void morris(STree *tree) {
   STree curr = *tree;
   while (curr) {
     if (!curr->left) {
@@ -179,13 +166,13 @@ morris(STree* tree)
     } else {
       STree pred = *rightmost_to(&curr->left, curr);
       assert(pred->right == EMPTY_STREE || pred->right == curr);
-      if (pred->right == EMPTY_STREE) {  // first time we are here
+      if (pred->right == EMPTY_STREE) { // first time we are here
         pred->right = curr;
-        curr        = curr->left;
-      } else {  // we have here been before
+        curr = curr->left;
+      } else { // we have here been before
         printf("2-%d ", curr->value);
-        pred->right = EMPTY_STREE;  // undo rightmost node
-        curr        = curr->right;
+        pred->right = EMPTY_STREE; // undo rightmost node
+        curr = curr->right;
       }
     }
   }
@@ -193,22 +180,15 @@ morris(STree* tree)
 
 // ========================= Iterators =========================
 
-typedef struct stree_iter
-{
-  Node* curr;
+typedef struct stree_iter {
+  Node *curr;
 } StreeIter;
 
-StreeIter
-stree_iter(STree* t)
-{
-  return (StreeIter){ .curr = *t };
-}
+StreeIter stree_iter(STree *t) { return (StreeIter){.curr = *t}; }
 
 // returns next node or NULL if there are no nodes left
-Node*
-next_node(StreeIter* iter)
-{
-  Node* curr = iter->curr;
+Node *next_node(StreeIter *iter) {
+  Node *curr = iter->curr;
   while (curr) {
     if (!curr->left) {
       iter->curr = curr->right;
@@ -218,9 +198,9 @@ next_node(StreeIter* iter)
       assert(pred->right == EMPTY_STREE || pred->right == curr);
       if (pred->right == EMPTY_STREE) {
         pred->right = curr;
-        curr        = curr->left;
+        curr = curr->left;
       } else {
-        iter->curr  = curr->right;
+        iter->curr = curr->right;
         pred->right = EMPTY_STREE;
         return curr; // Yield node
       }
@@ -229,16 +209,13 @@ next_node(StreeIter* iter)
   return NULL;
 }
 
-void
-cleanup_iter(StreeIter* iter)
-{
+void cleanup_iter(StreeIter *iter) {
   // Run to completion to clean up
-  while (next_node(iter)) { }
+  while (next_node(iter)) {
+  }
 }
 
-int
-main()
-{
+int main() {
 #if 0
   STree t =
     node(3,
@@ -252,33 +229,33 @@ main()
   insert(&t, 2);
   insert(&t, 1);
   insert(&t, 6);
-  assert( contains(&t,  2));
-  assert( contains(&t,  1));
-  assert( contains(&t,  3));
+  assert(contains(&t, 2));
+  assert(contains(&t, 1));
+  assert(contains(&t, 3));
   assert(!contains(&t, 10));
-  assert(!contains(&t,  0));
+  assert(!contains(&t, 0));
   print_stree(&t);
 
   printf("\n\33[38;5;206m========== Inserting 10 and 0 =================\033[0m\n");
   insert(&t, 10);
-  insert(&t,  0);
+  insert(&t, 0);
   assert(contains(&t, 10));
-  assert(contains(&t,  0));
+  assert(contains(&t, 0));
   print_stree(&t);
 
   printf("\n\33[38;5;206m========== Deleting 12, 6 and 3 ===============\033[0m\n");
-  delete(&t, 12);
-  delete(&t,  3);
-  delete(&t,  6);
+  delete (&t, 12);
+  delete (&t, 3);
+  delete (&t, 6);
   assert(!contains(&t, 3));
   assert(!contains(&t, 6));
   print_stree(&t);
   clear_stree(&t);
 
   printf("\n\33[38;5;206m========== Tree from array ====================\033[0m\n");
-  int    array[] = { 1, 2, 13, 4, 16, 8, 10 };
-  int    n       = sizeof array / sizeof *array;
-  STree* t2      = make_stree(n, array);
+  int array[] = {1, 2, 13, 4, 16, 8, 10};
+  int n = sizeof array / sizeof *array;
+  STree *t2 = make_stree(n, array);
   print_stree(t2);
 
   printf("\n\33[38;5;206m========== Inorder ============================\033[0m\n");
@@ -289,8 +266,9 @@ main()
 
   printf("\n\33[38;5;206m========== Iterator ===========================\033[0m\n");
   StreeIter iter = stree_iter(t2);
-  Node*     node = NULL;
-  while ((node = next_node(&iter))) printf("%d ", node->value);
+  Node *node = NULL;
+  while ((node = next_node(&iter)))
+    printf("%d ", node->value);
   cleanup_iter(&iter);
 
   printf("\n\33[38;5;206m========== Free ===============================\033[0m\n");

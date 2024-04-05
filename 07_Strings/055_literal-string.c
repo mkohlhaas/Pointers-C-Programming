@@ -3,11 +3,9 @@
 
 #include <stdio.h>
 
-int
-main()
-{
+int main() {
   // This would be the correct definition (as you should): char const* string = "foo";
-  char* string = "foo";
-  string[1] = 'O';                                  // Changing foo to fOo?
-  printf("Success! string is now '%s'\n", string);  // won't happen - segmentation fault!
+  char *string = "foo";
+  string[1] = 'O';                                 // Changing foo to fOo?
+  printf("Success! string is now '%s'\n", string); // won't happen - segmentation fault!
 }
