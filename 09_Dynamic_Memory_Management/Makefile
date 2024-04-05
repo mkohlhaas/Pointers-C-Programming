@@ -1,4 +1,4 @@
- CFLAGS  += -g
+CFLAGS  += -g
 LDFLAGS += -lm
 
 binaries = $(patsubst %.c,%,$(wildcard *.c))

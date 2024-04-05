@@ -1,6 +1,6 @@
 CFLAGS  += -g
 
-binaries = $(patsubst %.c,%,$(wildcard 0*.c))
+binaries = $(patsubst %.c,%,$(wildcard 8_*.c))
 
 .PHONY: all clean
 
