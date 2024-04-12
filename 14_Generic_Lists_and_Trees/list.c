@@ -3,58 +3,90 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-List *new_list(ListType type) {
-  List *list = malloc(sizeof *list);
-  if (list)
-    *list = (List){.head = {.next = &list->head, .prev = &list->head}, .type = type};
-  return list;
-}
-
-void free_list(List *x) {
-  void (*free_link)(Link *) = x->type.free;
-  // We can only free if we have a free function.
-  // Otherwise, assume that we shouldn't free.
-  if (free_link) {
-    Link *lnk = front(x);
-    while (lnk != head(x)) {
-      Link *next = lnk->next;
-      free_link(lnk);
-      lnk = next;
+list *
+new_list (list_api api)
+{
+  list *lst = malloc (sizeof *lst);
+  if (lst)
+    {
+      *lst = (list)
+        {
+          .head =
+            {
+              .next = &lst->head,
+              .prev = &lst->head,
+            },
+          .api = api,
+        };
     }
-  }
-  free(x);
+  return lst;
 }
 
-// Default print function
-static void print_link(Link *lnk) { printf("<link %p>", (void *)lnk); }
-
-void print_list(List *x) {
-  void (*print)(Link *) = (x->type.print) ? x->type.print : print_link;
-  printf("[ ");
-  for (Link *lnk = front(x); lnk != head(x); lnk = lnk->next) {
-    print(lnk);
-    putchar(' ');
-  }
-  printf("]\n");
+void
+free_list (list *lst)
+{
+  void (*free_link) (link *) = lst->api.free;
+  if (free_link)
+    {
+      link *lnk = front (lst);
+      while (lnk != head (lst))
+        {
+          link *next = lnk->next;
+          free_link (lnk);
+          lnk = next;
+        }
+    }
+  free (lst);
 }
 
-Link *find_link(List *x, Link *from, bool (*p)(Link *)) {
-  for (Link *lnk = from; lnk != head(x); lnk = lnk->next)
-    if (p(lnk))
-      return lnk;
+static void
+print_link (link *lnk)
+{
+  printf ("<link %p>", (void *)lnk);
+}
+
+void
+print_list (list *lst)
+{
+  void (*print) (link *) = (lst->api.print) ? lst->api.print : print_link;
+  printf ("[ ");
+  for (link *lnk = front (lst); lnk != head (lst); lnk = lnk->next)
+    {
+      print (lnk);
+      putchar (' ');
+    }
+  printf ("]\n");
+}
+
+link *
+find_link (list *lst, link *from, bool (*pred) (link *))
+{
+  for (link *lnk = from; lnk != head (lst); lnk = lnk->next)
+    {
+      if (pred (lnk))
+        {
+          return lnk;
+        }
+    }
   return NULL;
 }
 
-void delete_if(List *x, bool (*p)(Link *)) {
-  void (*free)(Link *) = x->type.free;
-  Link *lnk = front(x);
-  while (lnk != head(x)) {
-    Link *next = lnk->next;
-    if (p(lnk)) {
-      unlink(lnk);
-      if (free)
-        free(lnk);
+void
+delete_if (list *lst, bool (*pred) (link *))
+{
+  void (*free) (link *) = lst->api.free;
+  if (!free)
+    {
+      link *lnk = front (lst);
+      while (lnk != head (lst))
+        {
+          link *next = lnk->next;
+          if (pred (lnk))
+            {
+              unlink (lnk);
+              free (lnk);
+            }
+          lnk = next;
+        }
     }
-    lnk = next;
-  }
 }

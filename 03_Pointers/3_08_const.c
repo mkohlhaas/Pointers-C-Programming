@@ -9,22 +9,26 @@
 
 #include <stdio.h>
 
-void foo(int const *cip) {
+void
+foo (int const *cip)
+{
   int *ip;
-  ip = (int *)cip; // `const` is lost
+  ip  = (int *)cip; // `const` is lost
   *ip = 5;
 }
 
-int main() {
-  int const i = 42;
-  int *ip = (int *)&i;
-  *ip = 13;
+int
+main ()
+{
+  int const i  = 42;
+  int      *ip = (int *)&i;
+  *ip          = 13;
   // i == 42 or i == 13?
   // Depends on optimization level of compiler!
-  printf("i = %2d, *ip = %2d\n", i, *ip);
+  printf ("i = %2d, *ip = %2d\n", i, *ip);
 
   int j = 39;
-  foo(&i); // undefined behavior as above; result depends on optimization level
-  foo(&j); // you are allowed to change a non-onstant variable even if you have a const pointer to it
-  printf("i = %2d,   j = %2d\n", i, j);
+  foo (&i); // undefined behavior as above; result depends on optimization level
+  foo (&j); // you are allowed to change a non-onstant variable even if you have a const pointer to it
+  printf ("i = %2d,   j = %2d\n", i, j);
 }

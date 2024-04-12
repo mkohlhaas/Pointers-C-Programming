@@ -1,231 +1,311 @@
-// adding a dummy element
+// Adding a dummy element.
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
 // fake malloc
-void *(*ml)(size_t) = malloc;
+void *(*ml) (size_t) = malloc;
 
-void *fake_malloc(size_t size) {
-  if (rand() % 100 == 0)
-    return NULL;
+void *
+fake_malloc (size_t size)
+{
+  if (rand () % 100 == 0)
+    {
+      return NULL;
+    }
   else
-    return ml(size);
+    {
+      return ml (size);
+    }
 }
 
 // comment out next line to use standard malloc()
 // #define malloc fake_malloc
 
-typedef struct link Link;
-
-typedef struct link {
-  int value;
-  Link *next;
+typedef struct link
+{
+  int          value;
+  struct link *next;
 } Link;
 
-// new definition of a list; a list is just a pointer to a link - actually to the first link in the list, the dummy link
-typedef Link *List; // Link* -> Dummy Link -> Link -> ... -> Link -> NULL
+// A list is a pointer to the first link in the list, the so-called dummy link.
+// The dummy link is always present.
+// Link → Dummy Link → Link → ... → Link → NULL
+typedef Link *List;
 
-Link *new_link(int val, Link *next) {
-  Link *link = malloc(sizeof *link);
+Link *
+new_link (int val, Link *next)
+{
+  Link *link = malloc (sizeof *link);
   if (!link)
-    return NULL;
+    {
+      return NULL;
+    }
   link->value = val;
-  link->next = next;
+  link->next  = next;
   return link;
 }
 
-// take a list - which is just a pointer to the first link in a list - and free all its links including the dummy link
-void free_links(List x) {
-  while (x) {
-    Link *next = x->next;
-    free(x);
-    x = next;
-  }
+// Free all links in a list including the dummy link.
+void
+free_links (List x)
+{
+  while (x)
+    {
+      Link *next = x->next;
+      free (x);
+      x = next;
+    }
 }
 
-// new list is an empty list with a single dummy link; value could be anything
-#define new_list() new_link(314159, NULL)
-#define free_list(x) free_links(x)
+// Removes all links except the dummy link.
+void
+clear_links (List x)
+{
+  List y = x;
+  x      = x->next; // skip dummy link
+  while (x)
+    {
+      Link *next = x->next;
+      free (x);
+      x = next;
+    }
+  y->next = NULL;
+}
 
-List make_list(int n, int array[n]) {
-  List x = new_list(); // create dummy link
+// New list is an empty list with a single dummy link; value could be anything.
+#define new_empty_list() new_link (314159, NULL)
+#define free_list(x)     free_links (x)
+
+List
+make_list_from_array (int n, int array[n])
+{
+  List x = new_empty_list (); // create dummy link
   if (!x)
-    return NULL;
-
-  for (int i = n - 1; i >= 0; i--) {
-    Link *link = new_link(array[i], x->next);
-    if (!link) {
-      free_list(x);
+    {
       return NULL;
     }
-    x->next = link; // connect dummy to new link
-  }
+
+  for (int i = n - 1; i >= 0; i--)
+    {
+      Link *newLink = new_link (array[i], x->next);
+      if (!newLink)
+        {
+          free_list (x);
+          return NULL;
+        }
+      x->next = newLink; // connect dummy link to new link
+    }
+
   return x;
 }
 
-void print_list(List x) {
-  printf("[ ");
-  Link *link = x->next; // skip dummy link
-  while (link) {
-    printf("%d ", link->value);
-    link = link->next;
-  }
-  printf("]\n");
+void
+print_list (List x)
+{
+  printf ("[ ");
+  Link *link = x->next; // skip dummy link and get first real link
+  while (link)
+    {
+      printf ("%d ", link->value);
+      link = link->next;
+    }
+  printf ("]\n");
 }
 
-bool contains(List x, int val) {
-  Link *link = x->next; // skip dummy link
-  while (link) {
-    if (link->value == val)
-      return true;
-    link = link->next;
-  }
+bool
+contains (List x, int val)
+{
+  Link *link = x->next; // skip dummy link and get first real link
+  while (link)
+    {
+      if (link->value == val)
+        {
+          return true;
+        }
+      link = link->next;
+    }
   return false;
 }
 
-bool prepend(List x, int val) {
-  Link *link = new_link(val, x->next);
+bool
+prepend (List x, int val)
+{
+  Link *link = new_link (val, x->next);
   if (!link)
-    return false;
+    {
+      return false;
+    }
   x->next = link; // connect dummy link to new link
   return true;
 }
 
-// there is always a last link b/c of dummy link
-Link *last_link(List x) {
-  Link *prev = x; // points to dummy
-  while (prev->next)
-    prev = prev->next;
-  return prev;
+// There is always a last link b/c of the dummy link.
+Link *
+last_link (List x)
+{
+  while (x->next)
+    {
+      x = x->next;
+    }
+  return x;
 }
 
-bool append(List x, int val) {
-  Link *link = new_link(val, NULL);
+bool
+append (List x, int val)
+{
+  Link *link = new_link (val, NULL);
   if (!link)
-    return false;
-  last_link(x)->next = link;
+    {
+      return false;
+    }
+  last_link (x)->next = link;
   return true;
 }
 
-void concatenate(List x, List y) {
-  last_link(x)->next = y->next;
-  y->next = NULL; // list y can still be freed but is empty - list consists only of dummy link
+void
+concatenate (List x, List y)
+{
+  last_link (x)->next = y->next; // `y` belongs to `x` from now on
+  y->next             = NULL;    // list `y` can still be freed but is empty - list consists only of dummy link
 }
 
-void delete_value(List x, int val) {
+void
+delete_value (List x, int val)
+{
   Link *front = x; // pointer to dummy link
   Link *next;      // front and next are neighbors - front comes before next
-  while (front) {
-    while ((next = front->next) &&
-           next->value == val) { // first expression will always be evaluated; will be NULL at end of list
-      front->next = next->next;
-      free(next);
+
+  while (front)
+    {
+      while ((next = front->next) && next->value == val)
+        {
+          front->next = next->next;
+          free (next);
+        }
+      front = next; // move to the next link
     }
-    front = next; // move to the next link
-  }
 }
 
-void reverse(List x) {
+void
+reverse (List x)
+{
   Link *next = x->next; // skip dummy; get first real link
-  x->next = NULL;
-  while (next) {
-    Link *next_next;
-    next_next = next->next;
-    next->next = x->next;
-    x->next = next;
-    next = next_next;
-  }
+  x->next    = NULL;
+  while (next)
+    {
+      Link *next_next;
+      next_next  = next->next;
+      next->next = x->next;
+      x->next    = next;
+      next       = next_next;
+    }
 }
 
-int main() {
-  int success;
-  srand(time(0));
-  int array[] = {1, 2, 3, 4, 5};
-  int n = sizeof(array) / sizeof(array[0]);
+#define ARRAY_SIZE(a) (sizeof a / sizeof *a)
+#define c(v)          contains (x, v) ? "✓" : "✗"
+#define EH(x, msg)                                                                                                     \
+  ({                                                                                                                   \
+    if (!x)                                                                                                            \
+      {                                                                                                                \
+        perror (msg);                                                                                                  \
+        exit (EXIT_FAILURE);                                                                                           \
+      }                                                                                                                \
+  })
+
+int
+main ()
+{
+  bool success;
+  srand (time (0));
+  int array[] = { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 };
+  int n       = ARRAY_SIZE (array);
 
   {
-    // ==================== Contains ==================================================
+    // -------------------- Contains --------------------------------------------------
 
-    List x = make_list(n, array);
-    if (!x) {
-      perror("Make list error:");
-      exit(2);
-    }
-    print_list(x);
-    printf("Contains 0, 3, 6:\n");
-    printf("%d %d %d\n", contains(x, 0), contains(x, 3), contains(x, 6));
-    free_list(x);
+    List x = make_list_from_array (n, array);
+    EH (x, "make list error");
+    print_list (x);
+    printf ("\ncontains:\n0 3 6:\n");
+    printf ("%s %s %s\n", c (0), c (3), c (6));
+    free_list (x);
   }
 
   {
-    // ==================== Prepend/Append ============================================
+    // -------------------- Prepend/Append --------------------------------------------
 
-    printf("Append 6/Prepend 0\n");
-    List x = make_list(n, array);
-    if (!x) {
-      perror("Make list error:");
-      exit(1);
-    }
-    success = append(x, 6);
-    if (!success) {
-      perror("List error:");
-      exit(1);
-    }
-    success = prepend(x, 0);
-    if (!success) {
-      perror("List error:");
-      exit(1);
-    }
-    print_list(x);
-    free_list(x);
+    printf ("\nAppend 6/Prepend 0\n");
+    List x = make_list_from_array (n, array);
+    EH (x, "make list error");
+    EH (append (x, 6), "append list error");
+    EH (prepend (x, 0), "prepend list error");
+    print_list (x);
+    clear_links (x);
+    print_list (x);
+    EH (append (x, 6), "append list error");
+    EH (prepend (x, 0), "prepend list error");
+    print_list (x);
+    free_list (x);
   }
 
   {
-    // ==================== Concatenate ===============================================
+    // -------------------- Concatenate -----------------------------------------------
 
-    printf("Concatenate:\n");
-    List x = make_list(n, array);
-    List y = make_list(n, array);
-    concatenate(x, y);
-    print_list(x);
-    print_list(y);
-    free_list(x);
-    free_list(y);
+    printf ("\nConcatenate:\n");
+    List x = make_list_from_array (n, array);
+    print_list (x);
+    List y = make_list_from_array (n, array);
+    print_list (y);
+
+    concatenate (x, y);
+
+    print_list (x);
+    print_list (y);
+    free_list (x);
+    free_list (y);
   }
 
   {
-    // ==================== Deleting values ===========================================
+    // -------------------- Deleting Values -------------------------------------------
 
-    printf("Deleting values 2, 3:\n");
-    List x = make_list(n, array);
-    print_list(x);
-    delete_value(x, 2);
-    delete_value(x, 3);
-    print_list(x);
-    free_list(x);
+    printf ("\nDeleting values:\n");
+    List x = make_list_from_array (n, array);
+    print_list (x);
+    delete_value (x, 2);
+    print_list (x);
+    delete_value (x, 4);
+    print_list (x);
+    delete_value (x, 1);
+    print_list (x);
+    delete_value (x, 5);
+    print_list (x);
+    delete_value (x, 3);
+    print_list (x);
+    delete_value (x, 3);
+    print_list (x);
+    free_list (x);
   }
 
   {
-    // ==================== Deleting first link =======================================
+    // -------------------- Deleting First Link ---------------------------------------
 
-    printf("Deleting first link:\n");
-    List x = make_list(n, array);
-    delete_value(x, 1);
-    print_list(x);
-    free_list(x);
+    printf ("\nDeleting first link:\n");
+    List x = make_list_from_array (n, array);
+    delete_value (x, 1);
+    print_list (x);
+    free_list (x);
   }
 
   {
-    // ==================== Reversing =================================================
+    // -------------------- Reversing -------------------------------------------------
 
-    printf("Reversing:\n");
-    List x = make_list(n, array);
-    reverse(x);
-    print_list(x);
-    free_list(x);
+    printf ("\nReversing:\n");
+    List x = make_list_from_array (n, array);
+    reverse (x);
+    print_list (x);
+    free_list (x);
   }
 }

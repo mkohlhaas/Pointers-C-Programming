@@ -3,158 +3,252 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct node Node;
-typedef Node *STree;
-
-typedef struct node {
-  int value;
-  STree left;
-  STree right;
+// Tree of integers.
+typedef struct node
+{
+  int          value;
+  struct node *left;
+  struct node *right;
 } Node;
 
-#define EMPTY NULL
+typedef Node *stree;
 
-STree node(int value, STree left, STree right) {
-  STree t = malloc(sizeof *t);
+// Creates a new node on the heap and returns a pointer to it (= stree).
+stree
+node (int value, stree left, stree right)
+{
+  stree t = malloc (sizeof *t);
   if (t)
-    *t = (Node){.value = value, .left = left, .right = right};
+    {
+      *t = (Node){ .value = value, .left = left, .right = right };
+    }
   return t;
 }
 
-#define leaf(value) node(value, EMPTY, EMPTY)
+// Definition of an empty tree and creation of leaf node/stree.
+#define EMPTY_TREE  NULL
+#define leaf(value) node (value, EMPTY_TREE, EMPTY_TREE)
 
-// tail recursive
-bool contains(STree t, int val) {
+bool
+contains (stree t, int val)
+{
   if (!t)
-    return false;
+    {
+      return false;
+    }
   else if (val < t->value)
-    return contains(t->left, val);
+    {
+      return contains (t->left, val); // tail recursion
+    }
   else if (val > t->value)
-    return contains(t->right, val);
-  else /* (val == t->value) */
-    return true;
+    {
+      return contains (t->right, val); // tail recursion
+    }
+  else
+    {                                  // (val == t->value)
+      return true;
+    }
 }
 
 #if 0
-// Not tail recursive, and we don't handle allocation errors
-STree insert(STree t, int val)
+// Not tail recursive, and we don't handle allocation errors in `leaf()`.
+stree
+insert (stree t, int val)
 {
-  if      (!t)             return leaf(val);                                      // can fail, but we don't handle it
-  if      (val < t->value) t->left  = insert(t->left, val);
-  else if (val > t->value) t->right = insert(t->right, val);
+  if (!t)
+    {
+      return leaf (val); // can fail, but we don't handle it
+    }
+  if (val < t->value)
+    {
+      t->left = insert (t->left, val);
+    }
+  else if (val > t->value)
+    {
+      t->right = insert (t->right, val);
+    }
   return t;
 }
 #else
-// Not tail recursive
-STree insert_node(STree t, Node *n) {
+// Insert node `n` into tree `t`.
+static stree
+insert_node (stree t, Node *n)
+{
   if (!t)
-    return n;
+    {
+      return n;
+    }
+
   if (n->value == t->value)
-    free(n); // cannot have several nodes of the same value; t unchanged
+    {
+      free (n); // cannot have several nodes of the same value; `t` unchanged
+    }
   else if (n->value < t->value)
-    t->left = insert_node(t->left, n);
+    {
+      t->left = insert_node (t->left, n); // not tail recursive
+    }
   else if (n->value > t->value)
-    t->right = insert_node(t->right, n);
+    {
+      t->right = insert_node (t->right, n); // not tail recursive
+    }
+
   return t;
 }
 
-STree insert(STree t, int val) {
-  STree n = leaf(val);
+// Returns `NULL` on allocation errors in `leaf()`.
+// Will return a new `stree` if we have an empty tree and only then.
+stree
+insert (stree t, int val)
+{
+  // Create leaf node.
+  stree n = leaf (val);
+
   if (!n)
-    return NULL;
-  return insert_node(t, n);
+    {
+      return NULL; // indicates an error to the caller
+    }
+
+  return insert_node (t, n);
 }
 #endif
 
-STree make_stree(int n, int array[n]) {
-  STree t = EMPTY;
+stree
+make_stree_from_array (int n, int array[n])
+{
+  stree t = EMPTY_TREE;
+
   for (int i = 0; i < n; i++)
-    t = insert(t, array[i]);
-  return t;
-}
-
-// tail recursive
-int rightmost_val(STree t) {
-  assert(t);
-  if (!t->right)
-    return t->value;
-  else
-    return rightmost_val(t->right);
-}
-
-// not tail recursive
-STree delete(STree t, int val) {
-  if (!t)
-    return t;
-  if (val < t->value)
-    t->left = delete (t->left, val);
-  else if (val > t->value)
-    t->right = delete (t->right, val);
-  else /* (val == t->value) */ {
-    if (t->left && t->right) { // both subtrees exist
-      t->value = rightmost_val(t->left);
-      t->left = delete (t->left, t->value);
-    } else { // at most one subtree (0 or 1) exists
-      STree subtree = t->left ? t->left : t->right;
-      free(t);
-      return subtree;
+    {
+      t = insert (t, array[i]);
     }
-  }
   return t;
 }
 
-// Not tail recursive
-void print_stree(STree t) {
-  if (!t) {
-    putchar('_');
-  } else {
-    putchar('[');
-    print_stree(t->left);
-    putchar(',');
-    printf("%d", t->value);
-    putchar(',');
-    print_stree(t->right);
-    putchar(']');
-  }
+// Returns rightmost value of tree `t`.
+// `t` cannot be empty.
+int
+rightmost_val (stree t)
+{
+  assert (t);
+  if (!t->right)
+    { // current node doesn't have right sub-tree so it is the rightmost node
+      return t->value;
+    }
+  else
+    {
+      return rightmost_val (t->right); // tail recursive
+    }
 }
 
-// Not tail recursive
-void free_stree(STree t) {
+// Delete value `val` from tree `t`.
+stree delete (stree t, int val)
+{
   if (!t)
-    return;
-  free_stree(t->left);
-  free_stree(t->right);
-  free(t);
+    {
+      return t;
+    }
+
+  if (val < t->value)
+    {
+      t->left = delete (t->left, val); // not tail recursive
+    }
+  else if (val > t->value)
+    {
+      t->right = delete (t->right, val); // not tail recursive
+    }
+  else                                   // val == t->value
+    {
+      if (t->left && t->right)
+        {                                // both sub-trees exist
+          // store rightmost value of left sub-tree (= largest value in left sub-tree) in current node …
+          t->value = rightmost_val (t->left);
+          // … and delete this value in the left sub-tree; not tail recursive
+          t->left = delete (t->left, t->value);
+        }
+      else
+        { // at most one sub-tree (min 0/max 1) exists
+          stree subtree = t->left ? t->left : t->right;
+          free (t);
+          return subtree;
+        }
+    }
+  return t;
 }
 
-int main() {
-  printf("\33[38;5;206m========== Original ========================\033[0m\n");
-  STree t = node(3, node(2, leaf(1), EMPTY), leaf(6));
-  print_stree(t);
+static void
+print_stree_ (stree t)
+{
+  if (!t)
+    {
+      putchar ('_');
+    }
+  else
+    {
+      putchar ('[');
+      print_stree_ (t->left); // not tail recursive
+      putchar (',');
+      printf ("%d", t->value);
+      putchar (',');
+      print_stree_ (t->right); // not tail recursive
+      putchar (']');
+    }
+}
 
-  printf("\n\33[38;5;206m========== Inserting 10 and 0 ==============\033[0m\n");
-  t = insert(t, 10);
-  t = insert(t, 0);
-  print_stree(t);
+void
+print_stree (stree t)
+{
+  print_stree_ (t);
+  printf ("\n");
+}
 
-  printf("\n\33[38;5;206m========== Delete 12 and 3 =================\033[0m\n");
+void
+free_stree (stree t)
+{
+  if (!t)
+    {
+      return;
+    }
+  free_stree (t->left);  // not tail recursive
+  free_stree (t->right); // not tail recursive
+  free (t);
+}
+
+#define pre  "\n\33[38;5;206m"
+#define post "\033[0m\n\n"
+
+int
+main ()
+{
+  printf (pre "---------- Original ------------------------" post);
+  stree t = node (3, node (2, leaf (1), EMPTY_TREE), leaf (6));
+  print_stree (t);
+
+  printf (pre "---------- Inserting 10 and 0 --------------" post);
+  t = insert (t, 10);
+  print_stree (t);
+  t = insert (t, 0);
+  print_stree (t);
+
+  printf (pre "---------- Deleting 12 and 3 ---------------" post);
   t = delete (t, 12);
+  // delete (t, 12); // would be the same → we are changing tree in place
+  print_stree (t);
   t = delete (t, 3);
-  print_stree(t);
-  free_stree(t);
+  // delete (t, 3); // would be the same → we are changing tree in place
+  print_stree (t);
+  free_stree (t);
 
-  printf("\n\33[38;5;206m========== Tree from array =================\033[0m\n");
-  int array[] = {1, 2, 3, 4, 6, 8, 10};
-  int n = sizeof array / sizeof *array;
-  t = make_stree(n, array);
-  print_stree(t);
-  putchar('\n');
-  free_stree(t);
+  printf (pre "---------- Tree from Array -----------------" post);
+  int array[] = { 1, 2, 3, 4, 6, 8, 10 };
+  int n       = sizeof array / sizeof *array;
+  t           = make_stree_from_array (n, array);
+  print_stree (t);
+  free_stree (t);
 
-  int array1[] = {4, 6, 8, 1, 2, 10, 3};
-  n = sizeof array1 / sizeof *array1;
-  t = make_stree(n, array1);
-  print_stree(t);
-  putchar('\n');
-  free_stree(t);
+  int array1[] = { 4, 6, 8, 1, 2, 10, 3 };
+  n            = sizeof array1 / sizeof *array1;
+  t            = make_stree_from_array (n, array1);
+  print_stree (t);
+  free_stree (t);
+  printf ("\n");
 }

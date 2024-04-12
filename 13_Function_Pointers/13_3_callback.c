@@ -1,61 +1,84 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef enum {
+// -- Typedefs ----------------------------------------------------
+
+typedef enum
+{
   MOUSEDOWN,
   MOUSEUP,
   CLICKED,
   DBLCLICKED,
-  // more...
-} ButtonEvent;
+  // …
+} button_event;
 
-typedef struct button Button;
+struct button;
 
-typedef void (*ButtonCB)(Button *, ButtonEvent);
+typedef void (*button_cb) (struct button *, button_event);
 
-typedef struct button {
-  char *text;
-  // lots of gui stuff here ...
-  ButtonCB cb_func;
-} Button;
+typedef struct button
+{
+  char     *text;
+  button_cb cb_func;
+  // lots of gui stuff here …
+} button;
 
-Button *new_button(char *text) {
-  Button *b = malloc(sizeof *b);
-  if (b) {
-    b->text = text;
-    b->cb_func = NULL;
-    // ...
-  }
+// -- Button ------------------------------------------------------
+
+button *
+new_button (char *text, button_cb cb_func)
+{
+  button *b = malloc (sizeof *b);
+  if (b)
+    {
+      b->text    = text;
+      b->cb_func = cb_func;
+      // …
+    }
   return b;
 }
 
-void install_button_callback(Button *b, ButtonCB cb_func) { b->cb_func = cb_func; }
-
-// Events
-void click_button(Button *b) {
-  // do whatever GUI thing you want...
-  if (b->cb_func)
-    b->cb_func(b, CLICKED);
+// -- callback
+void
+button_callback (button *but, button_event event)
+{
+  switch (event)
+    {
+    case CLICKED:
+      printf ("Button %s was clicked.\n", but->text);
+      break;
+    case DBLCLICKED:
+      printf ("Button %s was double-clicked.\n", but->text);
+      break;
+    default:
+      break;
+    }
 }
 
-void double_click_button(Button *b) {
-  if (b->cb_func)
-    b->cb_func(b, DBLCLICKED);
+// -- Events Simulation -------------------------------------------
+
+void
+click_button (button *b)
+{
+  b->cb_func (b, CLICKED);
 }
 
-// Callback
-void button_callback(Button *but, ButtonEvent event) {
-  if (event == CLICKED)
-    printf("Button %s was clicked.\n", but->text);
-  else if (event == DBLCLICKED)
-    printf("Button %s was double-clicked.\n", but->text);
+void
+double_click_button (button *b)
+{
+  b->cb_func (b, DBLCLICKED);
 }
 
-int main() {
-  Button *button = new_button("'My Button'");
-  install_button_callback(button, button_callback);
-  click_button(button);
-  double_click_button(button);
+// -- Main --------------------------------------------------------
 
-  free(button);
+int
+main ()
+{
+  button *button = new_button ("'My Button'", button_callback);
+
+  // invoke events
+  click_button (button);
+  double_click_button (button);
+
+  free (button);
 }

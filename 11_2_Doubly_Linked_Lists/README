@@ -1,4 +1,0 @@
-First read list.h and list.c !
-
-Execute sorting of random arrays forever:
-$ while true; do ./088_sorting; sleep 0.5; done

@@ -8,13 +8,14 @@
 // immutable tree (consisting of immutable nodes)
 typedef struct node Node;
 
-typedef struct node {
-  int const val;
+typedef struct node
+{
+  int const   val;
   Node *const left;
   Node *const right;
 } Node;
 
 // t is Node*
-#define EMPTY incref(empty_node)
+#define EMPTY       incref (empty_node)
 #define is_empty(t) (t == empty_node)
 #define is_error(t) (t == NULL)

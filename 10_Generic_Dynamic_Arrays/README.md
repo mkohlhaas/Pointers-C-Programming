@@ -1,0 +1,8 @@
+- Heap-Allocated Inlined Array???
+- [Statement Expressions](https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html)
+- [Comma Operator](https://en.wikipedia.org/wiki/Comma_operator)
+- Do-While-Loop in macros:
+  - it is a C idiom that lets you use a macro expansion as a statement
+  - it has the added benefit that we can use a break statement to leave the sequence of expanded statements
+- [typeof & auto_type](https://gcc.gnu.org/onlinedocs/gcc/Typeof.html)
+- [Flexible Array Members](https://en.wikipedia.org/wiki/Flexible_array_member)

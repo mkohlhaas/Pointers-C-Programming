@@ -46,82 +46,103 @@
 // bucket of chars
 #define BUCKET_SIZE CHAR_MAX
 
-void print_buckets_header() {
-  printf("\nBuckets tables:\n");
-  for (char i = 'A'; i < BUCKET_SIZE; i++) {
-    printf("%c ", i);
-  }
+void
+print_buckets_header ()
+{
+  printf ("\nBuckets tables:\n");
+  for (char i = 'A'; i < BUCKET_SIZE; i++)
+    {
+      printf ("%c ", i);
+    }
 }
 
-void print_buckets(int buckets[BUCKET_SIZE]) {
-  printf("\n");
-  for (size_t i = 'A'; i < BUCKET_SIZE; i++) {
-    if (buckets[i]) {
-      printf("%d ", buckets[i]);
-    } else {
-      printf("_ ");
+void
+print_buckets (int buckets[BUCKET_SIZE])
+{
+  printf ("\n");
+  for (size_t i = 'A'; i < BUCKET_SIZE; i++)
+    {
+      if (buckets[i])
+        {
+          printf ("%d ", buckets[i]);
+        }
+      else
+        {
+          printf ("_ ");
+        }
     }
-  }
 }
 
 // search for first char in string i of array
 #define SEARCH_EXPR array[i][0]
 
 // `n` is the number of words in `array`.
-void compute_buckets(int n, char *array[n], int buckets[BUCKET_SIZE]) {
+void
+compute_buckets (int n, char *array[n], int buckets[BUCKET_SIZE])
+{
   // Bucket table contains counts of first chars of the words in `array`.
-  for (size_t i = 0; i < n; i++) {
-    char bucket = SEARCH_EXPR;
-    buckets[bucket]++;
-  }
-  print_buckets(buckets);
+  for (size_t i = 0; i < n; i++)
+    {
+      char bucket = SEARCH_EXPR;
+      buckets[bucket]++;
+    }
+  print_buckets (buckets);
 
   // go from right to left
   int m = n;
-  for (int i = BUCKET_SIZE - 1; i >= 0; i--) {
-    int count = buckets[i];
-    m -= count;
-    buckets[i] = m;
-  }
-  assert(m == 0);
-  print_buckets(buckets);
-  printf("\ncompute_buckets is finished.");
+  for (int i = BUCKET_SIZE - 1; i >= 0; i--)
+    {
+      int count = buckets[i];
+      m -= count;
+      buckets[i] = m;
+    }
+  assert (m == 0);
+  print_buckets (buckets);
+  printf ("\ncompute_buckets is finished.");
 }
 
 // 'array' IS ONLY SORTED ON THE FIRST CHAR OF EACH STRING!!!
-void sort_strings(int n, char *array[n], char *output[n]) {
+void
+sort_strings (int n, char *array[n], char *output[n])
+{
   int buckets[BUCKET_SIZE] = {}; // all initial counts = 0
-  compute_buckets(n, array, buckets);
+  compute_buckets (n, array, buckets);
 
   // loop over all words in `array`
-  for (size_t i = 0; i < n; i++) {
-    char bucket = SEARCH_EXPR;     // bucket = first char of word at `i`
-    int index = buckets[bucket]++; // index = current index; increment new index in buckets table
-    output[index] = array[i];      // put word at index i at output[index]
-    print_buckets(buckets);
-  }
+  for (size_t i = 0; i < n; i++)
+    {
+      char bucket   = SEARCH_EXPR;       // bucket = first char of word at `i`
+      int  index    = buckets[bucket]++; // index = current index; increment new index in buckets table
+      output[index] = array[i];          // put word at index i at output[index]
+      print_buckets (buckets);
+    }
 }
 
-void print_array(int n, char *array[n]) {
-  for (size_t i = 0; i < n; i++) {
-    printf("%s ", array[i]);
-  }
-  printf("\n");
+void
+print_array (int n, char *array[n])
+{
+  for (size_t i = 0; i < n; i++)
+    {
+      printf ("%s ", array[i]);
+    }
+  printf ("\n");
 }
 
-int main() {
-  char *array[] = {"foo", "qux", "qoo", "qaz", "boo", "bar", "qar", "baz"};
-  int n = sizeof array / sizeof *array;
+int
+main ()
+{
+  char *array[] = { "foo", "qux", "qoo", "qaz", "boo", "bar", "qar", "baz" };
+  int   n       = sizeof array / sizeof *array;
 
-  printf("Original array:\n");
-  print_array(n, array); // foo qux qoo qaz boo bar qar baz
+  printf ("Original array:\n");
+  print_array (n, array); // foo qux qoo qaz boo bar qar baz
 
   char *output[n];
-  print_buckets_header();
-  sort_strings(n, array, output); // sort 'array' into 'output'
-  printf("\n\n"
-         "Sorted array: "
-         "Array' is only sorted on the first char of each string!!!\n"); // bucket sort is stable → important for radix
-                                                                         // sort
-  print_array(n, output); // boo bar baz foo qux qoo qaz qar
+  print_buckets_header ();
+  sort_strings (n, array, output);                                        // sort 'array' into 'output'
+  printf ("\n\n"
+          "Sorted array: "
+          "Array' is only sorted on the first char of each string!!!\n"); // bucket sort is stable → important for radix
+                                                                          // sort
+  print_array (n, output); // boo bar baz foo qux qoo qaz qar
 }

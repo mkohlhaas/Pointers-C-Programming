@@ -1,0 +1,4 @@
+- We only consider trees that hold integers and without duplications.
+  - Order property: we require that the value in a node is larger than all the values in its left subtree and smaller than all the values in its right subtree.
+  - The order property prevents a search tree from holding more than one of the same value.
+- See assets folder for embeded stack diagrams (12_6_explicit-stack-embed.c).

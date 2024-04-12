@@ -1,4 +1,6 @@
-CFLAGS  += -g
+# CFLAGS  += -g -DNDEBUG
+CFLAGS  += -g -fsanitize=address
+
 binaries = $(patsubst %.c,%,$(wildcard 11_2_*.c))
 
 .PHONY: all clean

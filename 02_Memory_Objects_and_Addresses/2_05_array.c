@@ -2,14 +2,17 @@
 
 #define SIZE 5
 
-int main() {
+int
+main ()
+{
   int array[SIZE];
-  printf("array           = %p\n", array);
+  printf ("array           = %p\n", array);
 
-  for (int i = 0; i < SIZE; i++) {
-    printf("&array[%d]       = %p\n", i, &array[i]);
-  }
+  for (int i = 0; i < SIZE; i++)
+    {
+      printf ("&array[%d]       = %p\n", i, &array[i]);
+    }
 
-  printf("sizeof(array)   = %zu\n", sizeof array);
-  printf("%d * sizeof(int) = %zu\n", SIZE, SIZE * sizeof(int));
+  printf ("sizeof(array)   = %zu\n", sizeof array);
+  printf ("%d * sizeof(int) = %zu\n", SIZE, SIZE * sizeof (int));
 }

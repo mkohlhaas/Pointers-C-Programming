@@ -1,457 +1,586 @@
-// read p. 429 "Single Inheritance Objects and Classes"; at least first two paragraphs
-
-// Class hierarchy:
-// Obj -> Base Expression -> Value Expression
-//                        -> Binary Expression -> Addition Expression
-//                                             -> Subtraction Expression
-//                        -> Variable Expression
-
-// To create a new (sub-)class: define...
-// - hierarchy structure and object variables
-// - init function
-// - virtual functions and initialize them
-// - constructor
-
-// there are two hierarchies: one for the class with its functions and another one
-// with its member variables. Both have their own init functions.
-
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-// -------------------------------------------------------
-// -------------------- Preliminaries --------------------
-// -------------------------------------------------------
-typedef struct {
+// ==================== 1. Basic Stuff ====================================================================== //
+
+// The C standard guarantees that the first object you put in a struct goes at the first
+// memory address of instances of that struct. If you have a pointer to an instance
+// of the struct, then you can safely cast it to a pointer to the first element.
+
+// memory layouts:
+// A → char a
+// B → char a
+//     char b
+// C → char a
+//     char b
+//     char c
+
+typedef struct A
+{
   char a;
 } A;
 
-typedef struct {
-  A a;
+typedef struct B
+{
+  A    a;
   char b;
 } B;
 
-typedef struct {
-  B b;
+typedef struct C
+{
+  B    b;
   char c;
 } C;
 
-// ------------------------------------------------------
-// ------------ Class and object definitions ------------
-// ------------------------------------------------------
+// ============ 2. Single Inheritance Objects and Classes =================================================== //
 
-// this will be the class hierarchy with functions
-typedef void *Cls;
+// From p. 429 "Single Inheritance Objects and Classes":
 
-// this will be the object hierarchy with variables
-// all objects will be derived from 'Obj'
-typedef struct {
-  Cls cls; // pointer to virtual functions; because it's a void pointer it can point to all kinds of classes
-} Obj;
+// We can use this to create classes and objects (or instances) in an object-oriented
+// programming sense. It is close to how C++ was initially implemented as a preprocessor
+// to C. Use nested structs for objects, so derived objects contain the data their base
+// cases have. For classes, have a struct for virtual functions (or functions with dynamic
+// dispatch, or whatever you want to call them), and use nested structs for derived classes.
+// Since we need to be able to both extend instances, so objects of derived classes can
+// carry more data than the base classes, and extend classes, so derived classes can have
+// more virtual functions than base classes, we need two parallel hierarchies of nested
+// structs. Obviously, we cannot put both of these at the top of a struct, so the casting
+// trick cannot work that way. Instead, we make objects and classes separate structs. Each
+// object will need to know its class, so objects will have a pointer to their class struct.
 
-// cast x to base
-#define basetype(x, base) ((base *)x)
-// cast inst to Obj*, get its class pointer - which is a void pointer - and cast it to base
-#define vtbl(inst, base) basetype(((Obj *)inst)->cls, base)
+// Summary
+// -------
+// Two hierarchies:
+//   - class  hierarchy for virtual functions
+//   - object hierarchy for member variables
 
-// allocate space for the class where the functions are
-void *alloc_cls(size_t cls_size) {
-  Cls cls = malloc(cls_size);
+// Class hierarchy:
+// obj → base_expr(*) → value_expr
+//                    → bin_expr(*) → add_expr
+//                                  → sub_expr
+//                    → var_expr
+//
+// (*) abstract class
+
+// ============ Class/Object: Definitions & Allocations ===================================================== //
+
+typedef void *cls;
+
+typedef struct obj
+{
+  cls cls;
+} obj;
+
+// Cast `x` to `base`. `base` can be a class or an object instance.
+#define basetype(x, base)   ((base *)x)
+#define vtbl(inst, baseCls) basetype (((obj *)inst)->cls, baseCls)
+
+void *
+alloc_cls (size_t cls_size)
+{
+  cls cls = malloc (cls_size);
   if (!cls)
-    abort(); // error handling
+    {
+      abort ();
+    }
   return cls;
 }
 
-// allocate space for the class where the functions are
-// and fill the structure with init function
-// call init with p - init(p)
 #define INIT_CLS(p, init)                                                                                              \
-  do {                                                                                                                 \
-    if (!p) {                                                                                                          \
-      p = alloc_cls(sizeof *p);                                                                                        \
-      init(p);                                                                                                         \
+  do                                                                                                                   \
+    {                                                                                                                  \
+      if (!p)                                                                                                          \
+        {                                                                                                              \
+          p = alloc_cls (sizeof *p);                                                                                   \
+          init (p);                                                                                                    \
+        }                                                                                                              \
     }                                                                                                                  \
-  } while (0)
+  while (0)
 
-// allocate space for the object where the 'member variables' are
-// and set class pointer to its class
-void *alloc_obj(size_t obj_size, Cls cls) {
-  Obj *obj = malloc(obj_size);
+void *
+alloc_obj (size_t obj_size, cls cls)
+{
+  obj *obj = malloc (obj_size);
   if (!obj)
-    abort(); // error handling
+    {
+      abort ();
+    }
   obj->cls = cls;
   return obj;
 }
 
-#define NEW_OBJ(p, cls) alloc_obj(sizeof *p, cls)
+#define NEW_OBJ(p, cls) alloc_obj (sizeof *p, cls)
 
-// ----------------------------------------------------
-// -------------- Base Expression Class ---------------
-// ----------------------------------------------------
+// Look for these sections in the source code:
+// == 1. define object hierarchy and variables ==
+// == 2. define object init function ==
+// == 3. define class hierarchy and virtual functions ==
+// == 4. implement global and class virtual functions ==
+// == 5. define class init function ==
+// == 6. global variable for class ==
+// == 7. object constructor ==
 
-// Expressions
+// clang-format off
+// Explanations:
+// 1. define object hierarchy and variables        → a struct that references parent object and member variables
+// 2. define object init function                  → calls init function of parent object and initializes member variables
+// 3. define class hierarchy and virtual functions → a struct that references parent class and virtual functions
+// 4. implement global and class virtual functions → global functions call `vtbl`
+// 5. define class init function                   → calls init function of parent object and sets virtual functions to function pointers in the classes
+// 6. global variable for class (*)
+// 7. object constructor (*)                       → a. creates and inits class (`INIT_CLS` uses class init function from 5. and sets global variable for class from 6.)
+//                                                   b. creates object          (`NEW_OBJ`)
+//                                                   c. inits object            (object init function from 2.)
+// (*) only for concrete classes;
+// clang-format on
 
-// ---------- Define object variables -----------------
+// Naming Conventions:
+//   object (1.): e.g.              `value_expr`
+//   typedef value_expr *           `value_expr_t`;
+//   object init function (2.):     `init_value_expr`
+//   class (3.)                     `value_expr_cls`
+//   typedef value_expr_cls *       `value_expr_cls_t`;
+//   class init function (5.):      `init_value_expr_cls`
+//   global variable for class (6.):`VALUE_EXPR_CLS`
+//   object constructor (7.):       `value`
+//   class virtual functions:       `value_expr_name_of_fun` (e.g.  `value_expr_print`, `value_expr_eval`, …)
 
-typedef struct {
-  // derived from obj
-  Obj obj;
-  // no new variables ...
-} BaseExpr;
+// ============== Base Expression Class ===================================================================== //
 
-// ----- Init function -----
-void init_base_expr(BaseExpr *inst) {
-  // Initialize variables
-  // does nothing because we have no new variables
+// == 1. define object hierarchy and variables ==
+
+typedef struct base_expr
+{
+  obj obj;
+} base_expr;
+
+typedef base_expr *base_expr_t;
+
+// == 2. define object init function ==
+
+void
+init_base_expr (base_expr_t inst)
+{
 }
 
-typedef BaseExpr *Exp;
+// == 3. define class hierarchy and virtual functions ==
 
-// ---------- Define virtual functions ----------------
+typedef struct base_expr_cls
+{
+  void (*print) (base_expr_t);
+  double (*eval) (base_expr_t);
+} base_expr_cls;
 
-// define class and its virtual functions
-typedef struct {
-  void (*print)(Exp);
-  double (*eval)(Exp);
-} BaseExprCls;
+typedef base_expr_cls *base_expr_cls_t;
 
-void print(Exp expr) {
-  // no 'return' because 'print' does not return a value
-  vtbl(expr, BaseExprCls)->print(expr);
+// == 4. implement global and class virtual functions ==
+
+void
+print (base_expr_t expr)
+{
+  vtbl (expr, base_expr_cls)->print (expr);
 }
 
-double eval(Exp expr) {
-  // 'return' because we 'eval' returns a double
-  return vtbl(expr, BaseExprCls)->eval(expr);
+double
+eval (base_expr_t expr)
+{
+  return vtbl (expr, base_expr_cls)->eval (expr);
 }
 
-// Initialize virtual functions
-void init_base_expr_cls(BaseExprCls *cls) {
-  // base_expr_cls is an abstract class
+// == 5. define class init function
+
+void
+init_base_expr_cls (base_expr_cls_t cls)
+{
 }
 
-// ---------- Constructor -----------------------------
+// ==================== Value Expression Class ============================================================== //
 
-// no constructor because class is abstract
+// == 1. define object hierarchy and variables ==
 
-// ----------------------------------------------------------------
-// -------------------- Value Expression Class --------------------
-// ----------------------------------------------------------------
+typedef struct value_expr
+{
+  base_expr base_expr;
+  double    value;
+} value_expr;
 
-// ---------- Define object/member variables -----------------
+typedef value_expr *value_expr_t;
 
-typedef struct {
-  // derived from base_expr
-  BaseExpr base_expr;
-  // new variable
-  double value;
-} ValueExpr;
+// == 2. define object init function ==
 
-// ----- Init function -----
-void init_value_expr(ValueExpr *val, double value) {
-  // initializer parent variables
-  init_base_expr(basetype(val, BaseExpr));
+void
+init_value_expr (value_expr_t val, double value)
+{
+  init_base_expr (basetype (val, base_expr));
   val->value = value;
 }
 
-// ---------- Define virtual functions ----------------
+// == 3. define class hierarchy and virtual functions ==
 
-typedef struct {
-  // derived from base_expr_cls
-  BaseExprCls base_expr_cls;
-  // no new virtual functions
-} ValueExprCls;
+typedef struct value_expr_cls
+{
+  base_expr_cls base_expr_cls;
+} value_expr_cls;
 
-// Concrete (not abstract) class
-ValueExprCls *VALUE_EXPR_CLS;
+typedef value_expr_cls *value_expr_cls_t;
 
-void value_expr_print(Exp val) { printf("%.3f", ((ValueExpr *)val)->value); }
+// == 4. implement global and class virtual functions ==
 
-double value_expr_eval(Exp val) { return ((ValueExpr *)val)->value; }
+void
+value_expr_print (base_expr_t val)
+{
+  printf ("%.3f", ((value_expr_t)val)->value);
+}
 
-// ----- Init function -----
-void init_value_expr_cls(ValueExprCls *cls) {
-  BaseExprCls *base_expr = basetype(cls, BaseExprCls);
-  // initialize parent class
-  init_base_expr_cls(base_expr);
-  // override virtual functions of parent class
+double
+value_expr_eval (base_expr_t val)
+{
+  return ((value_expr_t)val)->value;
+}
+
+// == 5. define class init function ==
+
+void
+init_value_expr_cls (value_expr_cls_t cls)
+{
+  base_expr_cls_t base_expr = basetype (cls, base_expr_cls);
+  init_base_expr_cls (base_expr);
   base_expr->print = value_expr_print;
-  base_expr->eval = value_expr_eval;
+  base_expr->eval  = value_expr_eval;
 }
 
-// ---------- Constructor -----------------------------
+// == 6. global variable for class ==
 
-Exp value(double value) {
-  // allocate space for class and set pointer VALUE_EXPR_CLS to it
-  // remember it's a macro (text replacement)
-  INIT_CLS(VALUE_EXPR_CLS, init_value_expr_cls);
-  ValueExpr *val = NEW_OBJ(val, VALUE_EXPR_CLS);
-  // cannot put init function for obj because signatures are different
-  init_value_expr(val, value);
-  return (Exp)val;
+value_expr_cls *VALUE_EXPR_CLS;
+
+// == 7. object constructor ==
+
+base_expr_t
+value (double value)
+{
+  INIT_CLS (VALUE_EXPR_CLS, init_value_expr_cls);   // create and init class
+  value_expr_t val = NEW_OBJ (val, VALUE_EXPR_CLS); // create object
+  init_value_expr (val, value);                     // init object
+  return (base_expr_t)val;
 }
 
-// -----------------------------------------------------------------
-// -------------------- Binary Expression Class --------------------
-// -----------------------------------------------------------------
+// ==================== Binary Expression Class ============================================================= //
 
-// ---------- Define object variables -----------------
+// == 1. define object hierarchy and variables ==
 
-typedef struct {
-  // derived from base_expr
-  BaseExpr base_expr;
-  // new variables
-  char symb;
-  Exp left;
-  Exp right;
-} BinExpr;
+typedef struct bin_expr
+{
+  base_expr   base_expr;
+  char        symb;
+  base_expr_t left;
+  base_expr_t right;
+} bin_expr;
 
-// ----- Init function -----
-void init_bin_expr(BinExpr *binop, char symb, Exp left, Exp right) {
-  init_base_expr(basetype(binop, BaseExpr));
-  binop->symb = symb;
-  binop->left = left;
+typedef bin_expr *bin_expr_t;
+
+// == 2. define object init function ==
+
+void
+init_bin_expr (bin_expr_t binop, char symb, base_expr_t left, base_expr_t right)
+{
+  init_base_expr (basetype (binop, base_expr));
+  binop->symb  = symb;
+  binop->left  = left;
   binop->right = right;
 }
 
-// ---------- Define virtual functions ----------------
+// == 3. define class hierarchy and virtual functions ==
 
-typedef struct {
-  // derived from base_expr_cls
-  BaseExprCls base_expr_cls;
-  // no new virtual functions
-} BinExprCls;
+typedef struct bin_expr_cls
+{
+  base_expr_cls base_expr_cls;
+} bin_expr_cls;
 
-void print_binexpr(Exp expr) {
-  BinExpr *binop = (BinExpr *)expr;
-  putchar('(');
-  print(binop->left);
-  putchar(')');
-  putchar(binop->symb);
-  putchar('(');
-  print(binop->right);
-  putchar(')');
+typedef bin_expr_cls *bin_expr_cls_t;
+
+// == 4. implement global and class virtual functions ==
+
+void
+print_binexpr (base_expr_t expr)
+{
+  bin_expr_t binop = (bin_expr_t)expr;
+  putchar ('(');
+  print (binop->left);
+  putchar (')');
+  putchar (binop->symb);
+  putchar ('(');
+  print (binop->right);
+  putchar (')');
 }
 
-// ----- Init function -----
-void init_bin_expr_cls(BinExprCls *cls) {
-  // initialize parent class
-  init_base_expr_cls(basetype(cls, BaseExprCls));
-  // override virtual functions of parent class
-  // virtual function 'eval' is not overridden
-  BaseExprCls *base_expr = basetype(cls, BaseExprCls);
-  base_expr->print = print_binexpr;
+// == 5. define class init function ==
+
+void
+init_bin_expr_cls (bin_expr_cls_t cls)
+{
+  init_base_expr_cls (basetype (cls, base_expr_cls));
+  base_expr_cls_t base_expr = basetype (cls, base_expr_cls);
+  base_expr->print          = print_binexpr;
 }
 
-// ---------- Constructor -----------------------------
+// ==================== Addition Expression Class =========================================================== //
 
-// no constructor because it's an abstract class
+// == 1. define object hierarchy and variables ==
 
-// -------------------------------------------------------------------
-// -------------------- Addition Expression Class --------------------
-// -------------------------------------------------------------------
+typedef struct add_expr
+{
+  bin_expr binexpr;
+} add_expr;
 
-// ---------- Define object variables -----------------
+typedef add_expr *add_expr_t;
 
-typedef struct {
-  // derived from binexpr
-  BinExpr binexpr;
-  // no new variables ...
-} AddExpr;
+// == 2. define object init function ==
 
-// ----- Init function -----
-void init_add_expr(AddExpr *expr, Exp left, Exp right) { init_bin_expr(basetype(expr, BinExpr), '+', left, right); }
-
-// ---------- Define virtual functions ----------------
-
-typedef struct {
-  // derived from binexpr_cls
-  BinExprCls binexpr_cls;
-  // no new virtual functions
-} AddExprCls;
-
-// Concrete (not abstract) class
-AddExprCls *ADD_EXPR_CLS;
-
-double eval_add_expr(Exp expr) {
-  BinExpr *base = basetype(expr, BinExpr);
-  return eval(base->left) + eval(base->right);
+void
+init_add_expr (add_expr_t expr, base_expr_t left, base_expr_t right)
+{
+  init_bin_expr (basetype (expr, bin_expr), '+', left, right);
 }
 
-// ----- Init function -----
-void init_add_expr_cls(AddExprCls *cls) {
-  // initialize parent class
-  init_bin_expr_cls(basetype(cls, BinExprCls));
-  // override virtual functions of parent class
-  // virtual function 'print' is not overridden
-  BaseExprCls *base_expr = basetype(cls, BaseExprCls);
-  base_expr->eval = eval_add_expr;
+// == 3. define class hierarchy and virtual functions ==
+
+typedef struct add_expr_cls
+{
+  bin_expr_cls binexpr_cls;
+} add_expr_cls;
+
+typedef add_expr_cls *add_expr_cls_t;
+
+// == 4. implement global and class virtual functions ==
+
+double
+eval_add_expr (base_expr_t expr)
+{
+  bin_expr_t base = basetype (expr, bin_expr);
+  return eval (base->left) + eval (base->right);
 }
 
-// ---------- Constructor -----------------------------
+// == 5. define class init function ==
 
-Exp add(Exp left, Exp right) {
-  INIT_CLS(ADD_EXPR_CLS, init_add_expr_cls);
-  AddExpr *expr = NEW_OBJ(expr, ADD_EXPR_CLS);
-  init_add_expr(expr, left, right);
-  return (Exp)expr;
+void
+init_add_expr_cls (add_expr_cls_t cls)
+{
+  init_bin_expr_cls (basetype (cls, bin_expr_cls));
+  base_expr_cls_t base_expr = basetype (cls, base_expr_cls);
+  base_expr->eval           = eval_add_expr;
 }
 
-// ----------------------------------------------------------------------
-// -------------------- Subtraction Expression Class --------------------
-// ----------------------------------------------------------------------
+// == 6. global variable for class ==
 
-// ---------- Define object variables -----------------
+add_expr_cls *ADD_EXPR_CLS;
 
-typedef struct {
-  // derived from binexpr
-  BinExpr binexpr;
-  // no new variables ...
-} SubExpr;
+// == 7. object constructor ==
 
-// ----- Init function -----
-void init_sub_expr(AddExpr *expr, Exp left, Exp right) { init_bin_expr(basetype(expr, BinExpr), '-', left, right); }
-
-// ---------- Define virtual functions ----------------
-
-typedef struct {
-  // derived from binexpr_cls
-  BinExprCls binexpr_cls;
-  // no new virtual functions ...
-} SubExprCls;
-
-// Concrete class
-SubExprCls *SUB_EXPR_CLS;
-
-double eval_sub_expr(Exp expr) {
-  BinExpr *base = basetype(expr, BinExpr);
-  return eval(base->left) - eval(base->right);
+base_expr_t
+add (base_expr_t left, base_expr_t right)
+{
+  INIT_CLS (ADD_EXPR_CLS, init_add_expr_cls);
+  add_expr_t expr = NEW_OBJ (expr, ADD_EXPR_CLS);
+  init_add_expr (expr, left, right);
+  return (base_expr_t)expr;
 }
 
-void init_sub_expr_cls(SubExprCls *cls) {
-  // initialize parent class
-  init_bin_expr_cls(basetype(cls, BinExprCls));
-  // override virtual functions of parent class
-  // virtual function 'print' is not overridden
-  BaseExprCls *base_expr = basetype(cls, BaseExprCls);
-  base_expr->eval = eval_sub_expr;
+// ==================== Subtraction Expression Class ======================================================== //
+
+// == 1. define object hierarchy and variables ==
+
+typedef struct sub_expr
+{
+  bin_expr binexpr;
+} sub_expr;
+
+typedef sub_expr *sub_expr_t;
+
+// == 2. define object init function ==
+
+void
+init_sub_expr (sub_expr_t expr, base_expr_t left, base_expr_t right)
+{
+  init_bin_expr (basetype (expr, bin_expr), '-', left, right);
 }
 
-// ---------- Constructor -----------------------------
+// == 3. define class hierarchy and virtual functions ==
 
-Exp sub(Exp left, Exp right) {
-  INIT_CLS(SUB_EXPR_CLS, init_sub_expr_cls);
-  AddExpr *expr = NEW_OBJ(expr, SUB_EXPR_CLS);
-  init_sub_expr(expr, left, right);
-  return (Exp)expr;
+typedef struct sub_expr_cls
+{
+  bin_expr_cls binexpr_cls;
+} sub_expr_cls;
+
+typedef sub_expr_cls *sub_expr_cls_t;
+
+// == 4. implement global and class virtual functions ==
+
+double
+eval_sub_expr (base_expr_t expr)
+{
+  bin_expr_t base = basetype (expr, bin_expr);
+  return eval (base->left) - eval (base->right);
 }
 
-// -------------------------------------------------------------------
-// -------------------- Variable Expression Class --------------------
-// -------------------------------------------------------------------
+// == 5. define class init function ==
 
-// ---------- Define object variables -----------------
+void
+init_sub_expr_cls (sub_expr_cls_t cls)
+{
+  init_bin_expr_cls (basetype (cls, bin_expr_cls));
+  base_expr_cls_t base_expr = basetype (cls, base_expr_cls);
+  base_expr->eval           = eval_sub_expr;
+}
 
-typedef struct {
-  // derived from base_expr
-  BaseExpr base_expr;
-  // new object variables
+// == 6. global variable for class ==
+
+sub_expr_cls *SUB_EXPR_CLS;
+
+// == 7. object constructor ==
+
+base_expr_t
+sub (base_expr_t left, base_expr_t right)
+{
+  INIT_CLS (SUB_EXPR_CLS, init_sub_expr_cls);
+  sub_expr_t expr = NEW_OBJ (expr, SUB_EXPR_CLS);
+  init_sub_expr (expr, left, right);
+  return (base_expr_t)expr;
+}
+
+// ==================== Variable Expression Class =========================================================== //
+
+// == 1. define object hierarchy and variables ==
+
+typedef struct var_expr
+{
+  base_expr   base_expr;
   char const *name;
-  double value;
-} VarExpr;
+  double      value;
+} var_expr;
 
-// ----- Init function -----
-void init_var_expr(VarExpr *var, char const *name) {
-  init_base_expr(basetype(var, BaseExpr));
-  var->name = name;
+typedef var_expr *var_expr_t;
+
+// == 2. define object init function ==
+
+void
+init_var_expr (var_expr_t var, char const *name)
+{
+  init_base_expr (basetype (var, base_expr));
+  var->name  = name;
   var->value = NAN;
 }
 
-// Variables
-typedef VarExpr *Var;
+// == 3. define class hierarchy and virtual functions ==
 
-// ---------- Define virtual functions ----------------
+typedef struct var_expr_cls
+{
+  base_expr_cls base_expr_cls;
+  void (*bind) (var_expr_t var, base_expr_t val);
+  void (*unbind) (var_expr_t var);
+} var_expr_cls;
 
-typedef struct {
-  // derived from base_expr_cls
-  BaseExprCls base_expr_cls;
-  // new virtual functions
-  void (*bind)(Var var, Exp val);
-  void (*unbind)(Var var);
-} VarExprCls;
+typedef var_expr_cls *var_expr_cls_t;
 
-// Concrete (not abstract) class
-VarExprCls *VAR_EXPR_CLS;
+// == 4. implement global and class virtual functions ==
 
-// definition of new virtual functions
-void bind(Var var, Exp e) { vtbl(var, VarExprCls)->bind(var, e); }
-
-void unbind(Var var) { vtbl(var, VarExprCls)->unbind(var); }
-
-// implementation of new virtual functions
-void var_expr_bind(Var var, Exp e) { var->value = eval(e); }
-
-void var_expr_unbind(Var var) { var->value = NAN; }
-
-// implementation of virtual functions of base class
-void var_expr_print(Exp expr) {
-  Var var = (Var)expr;
-  if (isnan(var->value))
-    printf("%s", var->name); // print name
-  else
-    printf("%f", var->value); // print value
+void
+bind (var_expr_t var, base_expr_t e)
+{
+  vtbl (var, var_expr_cls)->bind (var, e);
 }
 
-double var_expr_eval(Exp expr) {
-  Var var = (Var)expr;
+void
+unbind (var_expr_t var)
+{
+  vtbl (var, var_expr_cls)->unbind (var);
+}
+
+void
+var_expr_bind (var_expr_t var, base_expr_t e)
+{
+  var->value = eval (e);
+}
+
+void
+var_expr_unbind (var_expr_t var)
+{
+  var->value = NAN;
+}
+
+void
+var_expr_print (base_expr_t expr)
+{
+  var_expr_t var = (var_expr_t)expr;
+  if (isnan (var->value))
+    {
+      printf ("%s", var->name);
+    }
+  else
+    {
+      printf ("%f", var->value);
+    }
+}
+
+double
+var_expr_eval (base_expr_t expr)
+{
+  var_expr_t var = (var_expr_t)expr;
   return var->value;
 }
 
-// ----- Init function -----
-void init_var_expr_cls(VarExprCls *cls) {
-  // initializer parent class
-  init_base_expr_cls(basetype(cls, BaseExprCls));
-  // override virtual functions in base class
-  BaseExprCls *base_expr = basetype(cls, BaseExprCls);
-  base_expr->print = var_expr_print;
-  base_expr->eval = var_expr_eval;
-  // new virtual functions
-  cls->bind = var_expr_bind;
-  cls->unbind = var_expr_unbind;
+// == 5. define class init function ==
+
+void
+init_var_expr_cls (var_expr_cls_t cls)
+{
+  init_base_expr_cls (basetype (cls, base_expr_cls));
+  base_expr_cls_t base_expr = basetype (cls, base_expr_cls);
+  base_expr->print          = var_expr_print;
+  base_expr->eval           = var_expr_eval;
+  cls->bind                 = var_expr_bind;
+  cls->unbind               = var_expr_unbind;
 }
 
-// ---------- Constructor -----------------------------
+// == 6. global variable for class ==
 
-Var var(char const *name) {
-  INIT_CLS(VAR_EXPR_CLS, init_var_expr_cls);
-  Var var = NEW_OBJ(var, VAR_EXPR_CLS);
-  init_var_expr(var, name);
+var_expr_cls *VAR_EXPR_CLS;
+
+// == 7. object constructor ==
+
+var_expr_t
+var (char const *name)
+{
+  INIT_CLS (VAR_EXPR_CLS, init_var_expr_cls);
+  var_expr_t var = NEW_OBJ (var, VAR_EXPR_CLS);
+  init_var_expr (var, name);
   return var;
 }
 
-// ----------------------------------------------------
-// -------------------- Main --------------------------
-// ----------------------------------------------------
-int main() {
-  // Preliminaries
-  C *cp = malloc(sizeof *cp);
-  cp->c = 'c';
-  cp->b.b = 'b';
+// ==================== Main ================================================================================ //
+
+int
+main ()
+{
+  // 1. Basic Stuff
+  C *cp     = malloc (sizeof *cp);
+  cp->c     = 'c';
+  cp->b.b   = 'b';
   cp->b.a.a = 'a';
-  assert(((B *)cp)->b == cp->b.b);
-  assert(((B *)cp)->a.a == cp->b.a.a);
-  assert(((A *)cp)->a == cp->b.a.a);
-  free(cp);
+  assert (cp->b.b == ((B *)cp)->b);
+  assert (cp->b.a.a == ((B *)cp)->a.a);
+  assert (cp->b.a.a == ((A *)cp)->a);
+  free (cp);
 
-  // Single Inheritance Objects
-  Var x = var("x");
-  Exp expr = add(value(1.0), sub((Exp)x, value(2.0)));
+  // 2. Single Inheritance Objects and Classes
+  var_expr_t  x    = var ("x");
+  base_expr_t expr = add (value (1.0), sub ((base_expr_t)x, value (2.0)));
 
-  print(expr); // prints 'x' for x and evaluates to nan
-  printf("\nevaluates to %f\n", eval(expr));
+  print (expr);                              // prints 'x' for x and evaluates to nan
+  printf ("\nevaluates to %f\n", eval (expr));
 
-  bind(x, add(value(40.0), value(2.0))); // set x to 42
-  print(expr);                           // now prints '42' for x and evaluates to 41
-  printf("\nevaluates to %f\n", eval(expr));
+  bind (x, add (value (40.0), value (2.0))); // set x to 42
+  print (expr);                              // now prints '42' for x and evaluates to 41
+  printf ("\nevaluates to %f\n", eval (expr));
 }

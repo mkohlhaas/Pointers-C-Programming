@@ -3,19 +3,21 @@
 
 #include <stdio.h>
 
-int main() {
-  int *i_p = NULL;
-  int const *ic_p = NULL;
-  int *const i_pc = NULL;
+int
+main ()
+{
+  int             *i_p   = NULL;
+  int const       *ic_p  = NULL;
+  int *const       i_pc  = NULL;
   int const *const ic_pc = NULL;
   // the last two one's are pretty uninteresting:
   // we can never  assign to   them (left-hand  side)
   // we can always assign from them (right-hand side)
 
   //  All permutations (2^4 = 16):
-  i_p = i_p;    // trivial (same types)
+  i_p  = i_p;   // trivial (same types)
   ic_p = ic_p;  // trivial (same types)
-  i_p = i_pc;   // you can remove const from pointer
+  i_p  = i_pc;  // you can remove const from pointer
   ic_p = ic_pc; // you can remove const from pointer
   ic_p = i_p;   // you can add const to target
   ic_p = i_pc;  // you can remove const from pointer; you can add const to target
@@ -30,10 +32,10 @@ int main() {
                 //  ic_pc =  i_pc;         // cannot assign to constant pointer
                 //  ic_pc = ic_pc;         // cannot assign to constant pointer
 
-  i_p = i_p;   // Ok, T * => T *; trivial
-  ic_p = ic_p; // Ok, T * => T * (T = U const); trivial
-               //   i_pc =  i_pc;         // No! You cannot assign to T const; you can't assign to const pointer
-               //  ic_pc = ic_pc;         // No! You cannot assign to T const; you can't assign to const pointer
+  i_p  = i_p;   // Ok, T * => T *; trivial
+  ic_p = ic_p;  // Ok, T * => T * (T = U const); trivial
+                //   i_pc =  i_pc;         // No! You cannot assign to T const; you can't assign to const pointer
+                //  ic_pc = ic_pc;         // No! You cannot assign to T const; you can't assign to const pointer
 
   //   i_p  = ic_p;          // No! T const * => T *; you can't remove const from target
   i_p = i_pc; // Ok, T * const => T *; you can remove const from pointer
@@ -55,22 +57,22 @@ int main() {
     int const * const *  ic_pc_p = NULL;
 #endif
 
-  typedef int *T;
+  typedef int       *T;
   typedef int const *U;
-  T *i_p_p = NULL;
-  U *ic_p_p = NULL;
-  T const *i_pc_p = NULL;
-  U const *ic_pc_p = NULL;
+  T                 *i_p_p   = NULL;
+  U                 *ic_p_p  = NULL;
+  T const           *i_pc_p  = NULL;
+  U const           *ic_pc_p = NULL;
   // plus the ones with const last, but they are simply const versions and we learn nothing new from them.
   // we can never  assign to   them (left-hand  side)
   // we can always assign from them (right-hand side)
 
   // All permutations (4^2 = 16):
-  i_p_p = i_p_p;     // trivial (same types)
-  ic_p_p = ic_p_p;   // trivial (same types)
-  i_pc_p = i_pc_p;   // trivial (same types)
+  i_p_p   = i_p_p;   // trivial (same types)
+  ic_p_p  = ic_p_p;  // trivial (same types)
+  i_pc_p  = i_pc_p;  // trivial (same types)
   ic_pc_p = ic_pc_p; // trivial (same types)
-  i_pc_p = i_p_p;    // you can add const to target
+  i_pc_p  = i_p_p;   // you can add const to target
   ic_pc_p = ic_p_p;  // you can add const to target
                      //   i_p_p =  ic_p_p;      // all others are not allowed
                      //   i_p_p =  i_pc_p;      // ...

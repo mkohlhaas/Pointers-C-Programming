@@ -2,69 +2,77 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-typedef struct link Link;
 
-typedef struct link {
-  Link *prev;
-  Link *next;
-} Link;
+typedef struct link
+{
+  struct link *prev;
+  struct link *next;
+} link;
 
-static inline void connect(Link *x, Link *y) {
+typedef struct list_api
+{
+  void (*free) (link *);
+  void (*print) (link *);
+} list_api;
+
+typedef struct list
+{
+  link     head;
+  list_api api;
+} list;
+
+// connect `x` to `y` (x ↔ y)
+static inline void
+connect (link *x, link *y)
+{
   x->next = y;
   y->prev = x;
 }
 
-static inline void connect_neighbours(Link *x) {
-  x->next->prev = x;
-  x->prev->next = x;
+static inline void
+connect_neighbours (link *lnk)
+{
+  lnk->next->prev = lnk;
+  lnk->prev->next = lnk;
 }
 
-// insert y after x
-static inline void link_after(Link *x, Link *y) {
+// insert `y` after `x` (x ↔ y)
+static inline void
+link_after (link *x, link *y)
+{
   y->prev = x;
   y->next = x->next;
-  connect_neighbours(y);
+  connect_neighbours (y);
 }
 
-// insert y before x
-#define link_before(x, y) link_after((x)->prev, y)
+// insert y before x (y ↔ x)
+#define link_before(x, y) link_after ((x)->prev, y)
 
 // This time, unlink will set x's pointers to NULL.
-// We don't want to risk the callback function modifying
-// the list after the link is removed.
-static inline void unlink(Link *x) {
-  if (!x->prev || !x->next)
-    return;
-  x->next->prev = x->prev;
-  x->prev->next = x->next;
-  x->prev = NULL;
-  x->next = NULL;
+// We don't want to risk the callback function modifying the list after the link is removed.
+static inline void
+unlink (link *lnk)
+{
+  if (!lnk->prev || !lnk->next)
+    {
+      return;
+    }
+  lnk->next->prev = lnk->prev;
+  lnk->prev->next = lnk->next;
+  lnk->prev       = NULL;
+  lnk->next       = NULL;
 }
 
-typedef struct list_type {
-  // similar to virtual function table (vtbl)
-  void (*free)(Link *);
-  void (*print)(Link *);
-} ListType;
+// `x` is a `list*`; returns `link*`
+#define head(x)          (&(x)->head)
+#define front(x)         (head (x)->next)
+#define back(x)          (head (x)->prev)
+#define is_empty(x)      (head (x) == front (x))
+#define append(x, link)  link_before (head (x), link)
+#define prepend(x, link) link_after (head (x), link)
 
-typedef struct list {
-  Link head;     // similar to object variables
-  ListType type; // vtbl is part of a list
-} List;
-
-// x ix list*
-// returns link*
-#define head(x) (&(x)->head)
-#define front(x) (head(x)->next)
-// we are using circular lists
-#define back(x) (head(x)->prev)
-#define is_empty(x) (head(x) == front(x))
-
-#define append(x, link) link_before(head(x), link)
-#define prepend(x, link) link_after(head(x), link)
-
-List *new_list(ListType type);
-void free_list(List *x);
-void print_list(List *x);
-Link *find_link(List *x, Link *from, bool (*p)(Link *));
-void delete_if(List *x, bool (*p)(Link *));
+list *new_list (list_api api);
+void  free_list (list *lst);
+void  print_list (list *lst);
+link *find_link (list *lst, link *from, bool (*pred) (link *));
+void  delete_if (list *lst, bool (*pred) (link *));
