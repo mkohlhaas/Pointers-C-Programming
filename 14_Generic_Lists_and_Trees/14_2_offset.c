@@ -1,6 +1,5 @@
 #include "list.h"
-#include <assert.h>
-#include <stddef.h> // for offsetof
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -11,12 +10,12 @@ typedef struct double_link
   link forward_link;
   link backward_link;
   int  value;
-} DLink;
+} double_link;
 
-DLink *
-new_dlink (int value)
+double_link *
+new_double_link (int value)
 {
-  DLink *link = malloc (sizeof *link);
+  double_link *link = malloc (sizeof *link);
   if (link)
     {
       link->value = value;
@@ -25,7 +24,7 @@ new_dlink (int value)
 }
 
 void
-print_dlink (DLink *link)
+print_double_link (double_link *link)
 {
   printf ("%d", link->value);
 }
@@ -33,19 +32,18 @@ print_dlink (DLink *link)
 void
 print_forward (link *link)
 {
-  print_dlink (container (link, DLink, forward_link));
+  print_double_link (container (link, double_link, forward_link));
 }
 
 void
 print_backward (link *link)
 {
-  print_dlink (container (link, DLink, backward_link));
+  print_double_link (container (link, double_link, backward_link));
 }
 
-void
-free_dlink (DLink *link)
+static void
+free_double_link (double_link *link)
 {
-  // We have to unlink from both lists before we can safely free the link.
   unlink (&link->forward_link);
   unlink (&link->backward_link);
   free (link);
@@ -54,29 +52,19 @@ free_dlink (DLink *link)
 void
 free_forward (link *link)
 {
-  free_dlink (container (link, DLink, forward_link));
+  free_double_link (container (link, double_link, forward_link));
 }
 
 void
 free_backward (link *link)
 {
-  free_dlink (container (link, DLink, backward_link));
+  free_double_link (container (link, double_link, backward_link));
 }
-
-list_api forward_type = {
-  .free  = free_forward,
-  .print = print_forward,
-};
-
-list_api backward_type = {
-  .free  = free_backward,
-  .print = print_backward,
-};
 
 bool
 is_forward_even (link *l)
 {
-  DLink *link = container (l, DLink, forward_link);
+  double_link *link = container (l, double_link, forward_link);
   return link->value % 2 == 0;
 }
 
@@ -84,6 +72,15 @@ int
 main ()
 {
   printf ("Creating two lists - a forward and a backward type list.\n");
+  list_api forward_type = {
+    .free  = free_forward,
+    .print = print_forward,
+  };
+
+  list_api backward_type = {
+    .free  = free_backward,
+    .print = print_backward,
+  };
   list *forward  = new_list (forward_type);
   list *backward = new_list (backward_type);
   if (!forward || !backward)
@@ -93,11 +90,12 @@ main ()
 
   for (int i = 0; i < 10; i++)
     {
-      DLink *link = new_dlink (i);
+      double_link *link = new_double_link (i);
       if (!link)
         {
           abort ();
         }
+      // same link in both lists (shared links)
       append (forward, &link->forward_link);
       prepend (backward, &link->backward_link);
     }
@@ -111,8 +109,8 @@ main ()
   print_list (backward);
 
   printf ("\nReplacing 0 with 42.\n");
-  DLink *link = container (front (forward), DLink, forward_link);
-  link->value = 42;
+  double_link *link = container (front (forward), double_link, forward_link);
+  link->value       = 42;
   printf ("Both lists have changed because the links are shared.\n");
   printf ("\nPrint forward type list:\n");
   printf ("------------------------\n");
@@ -123,7 +121,6 @@ main ()
   print_list (backward);
 
   printf ("\nDelete all even numbers.\n");
-  // removes them from both lists
   delete_if (forward, is_forward_even);
   printf ("Print forward type list:\n");
   printf ("------------------------\n");

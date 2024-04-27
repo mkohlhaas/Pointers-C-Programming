@@ -1,12 +1,10 @@
 #include "list.h"
 #include "stree.h"
-#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-// returns Ostring*
 #define container(p, type, member) ((type *)((char *)p - offsetof (type, member)))
 
 typedef struct ordered_string
@@ -14,30 +12,29 @@ typedef struct ordered_string
   node        node; // tree-like
   link        link; // list-like
   char const *str;
-} OString;
+} ordered_string;
 
 void
-print_ordered_string (OString *str)
+print_ordered_string (ordered_string *ostr)
 {
-  printf ("\"%s\"", str->str);
+  printf ("\"%s\"", ostr->str);
 }
 
 void
-free_ordered_string (OString *str)
+free_ordered_string (ordered_string *ostr)
 {
 
-  unlink (&str->link); // Remove from data structures...
-  remove_node (&str->node);
-  free (str);          // and then free...
+  unlink (&ostr->link);
+  remove_node (&ostr->node);
+  free (ostr);
 }
 
-// ==============================================
-// =============== Tree interface ===============
-// ==============================================
+// --------------- stree_api ----------------------------------------------------- //
+
 void const *
 strnode_key (node *n)
 {
-  return container (n, OString, node)->str;
+  return container (n, ordered_string, node)->str;
 }
 
 int
@@ -49,13 +46,13 @@ strnode_cmp (void const *x, void const *y)
 void
 strnode_print (node *n)
 {
-  print_ordered_string (container (n, OString, node));
+  print_ordered_string (container (n, ordered_string, node));
 }
 
 void
 strnode_free (node *n)
 {
-  free_ordered_string (container (n, OString, node));
+  free_ordered_string (container (n, ordered_string, node));
 }
 
 stree_api strnode_type = {
@@ -65,19 +62,18 @@ stree_api strnode_type = {
   .free  = strnode_free,
 };
 
-// ==============================================
-// =============== List interface ===============
-// ==============================================
+// --------------- list_api ------------------------------------------------------ //
+
 void
 strlink_print (link *lnk)
 {
-  print_ordered_string (container (lnk, OString, link));
+  print_ordered_string (container (lnk, ordered_string, link));
 }
 
 void
 strlink_free (link *lnk)
 {
-  free_ordered_string (container (lnk, OString, link));
+  free_ordered_string (container (lnk, ordered_string, link));
 }
 
 list_api strlink_type = {
@@ -85,12 +81,12 @@ list_api strlink_type = {
   .free  = strlink_free,
 };
 
-// ==============================================
+// --------------- ordered string ------------------------------------------------ //
 
-OString *
-new_ostring (char const *str)
+ordered_string *
+new_ordered_string (char const *str)
 {
-  OString *n = malloc (sizeof *n);
+  ordered_string *n = malloc (sizeof *n);
   if (!n)
     {
       abort ();
@@ -99,17 +95,10 @@ new_ostring (char const *str)
   return n;
 }
 
-typedef struct ordered_strings
-{
-  stree *map;
-  list  *order;
-} OrderedStrings;
-
-// Helper Functions for API
 link *
-take_front (list *x, int idx)
+take_front (list *lst, int idx)
 {
-  for (link *lnk = front (x); lnk != head (x); lnk = lnk->next)
+  for (link *lnk = front (lst); lnk != head (lst); lnk = lnk->next)
     {
       if (idx-- == 0)
         {
@@ -132,16 +121,21 @@ take_back (list *x, int idx)
   return NULL;
 }
 
-// ===================================
-// =============== API ===============
-// ===================================
-OrderedStrings *
+// --------------- ordered strings ----------------------------------------------- //
+
+typedef struct ordered_strings
+{
+  stree *map;
+  list  *order;
+} ordered_strings;
+
+ordered_strings *
 new_ordered_strings ()
 {
-  OrderedStrings *os = malloc (sizeof *os);
+  ordered_strings *os = malloc (sizeof *os);
   if (!os)
     {
-      abort (); // handle alloc errors
+      abort ();
     }
   os->map   = new_tree (strnode_type);
   os->order = new_list (strlink_type);
@@ -153,97 +147,96 @@ new_ordered_strings ()
 }
 
 void
-add_string (OrderedStrings *os, char const *str)
+add_string (ordered_strings *oss, char const *str)
 {
-  OString *ostr = new_ostring (str);
+  ordered_string *ostr = new_ordered_string (str);
   if (!ostr)
     {
       abort ();
     }
-  insert_node (os->map, &ostr->node);
-  append (os->order, &ostr->link);
+  insert_node (oss->map, &ostr->node);
+  append (oss->order, &ostr->link);
 }
 
 void
-remove_string (OrderedStrings *os, char const *str)
+remove_string (ordered_strings *oss, char const *str)
 {
-  node *n = find_node (os->map, str);
+  node *n = find_node (oss->map, str);
   if (n)
     {
-      OString *x = container (n, OString, node);
+      ordered_string *x = container (n, ordered_string, node);
       free_ordered_string (x);
     }
 }
 
 void
-remove_index (OrderedStrings *os, int idx)
+remove_index (ordered_strings *oss, int idx)
 {
   link *lnk;
   if (idx < 0)
     {
-      lnk = take_back (os->order, -idx - 1);
+      lnk = take_back (oss->order, -idx - 1);
     }
   else
     {
-      lnk = take_front (os->order, idx);
+      lnk = take_front (oss->order, idx);
     }
   if (!lnk)
     {
-      return; // report an error...
+      return; // TODO: report an error …
     }
-  OString *x = container (lnk, OString, link);
+  ordered_string *x = container (lnk, ordered_string, link);
   free_ordered_string (x);
 }
 
 void
-free_ordered_strings (OrderedStrings *os)
+free_ordered_strings (ordered_strings *oss)
 {
   // Freeing through the tree, and unlinking through
   // the links, is linear time. The other way requires
   // searching for rightmost, and would be O(n log n).
   // So free the tree first, then the (now empty) list.
-  free_tree (os->map);
-  free_list (os->order);
-  free (os);
+  free_tree (oss->map);
+  free_list (oss->order);
+  free (oss);
 }
 
-// ====================================
-// =============== Main ===============
-// ====================================
+// --------------- Main ---------------------------------------------------------- //
+
 int
 main ()
 {
-  OrderedStrings *os = new_ordered_strings ();
+  ordered_strings *oss = new_ordered_strings ();
 
-  add_string (os, "foo");
-  add_string (os, "bar");
-  add_string (os, "baz");
-  add_string (os, "qux");
-  add_string (os, "qax");
+  add_string (oss, "foo");
+  add_string (oss, "bar");
+  add_string (oss, "baz");
+  add_string (oss, "qux");
+  add_string (oss, "qax");
 
   printf ("Original list:\n");
   printf ("--------------\n");
-  print_list (os->order);
-  print_tree (os->map);
+  print_list (oss->order);
+  print_tree (oss->map);
 
   printf ("\n\nRemoving 'bar':\n");
   printf ("---------------\n");
-  remove_string (os, "bar");
-  print_list (os->order);
-  print_tree (os->map);
+  remove_string (oss, "bar");
+  print_list (oss->order);
+  print_tree (oss->map);
 
   printf ("\n\nRemoving index 1 (baz):\n");
   printf ("-----------------------\n");
-  remove_index (os, 1);
-  print_list (os->order);
-  print_tree (os->map);
+  remove_index (oss, 1);
+  print_list (oss->order);
+  print_tree (oss->map);
 
   printf ("\n\nRemoving index -3 (foo):\n");
   printf ("------------------------\n");
-  remove_index (os, -3);
-  print_list (os->order);
-  print_tree (os->map);
+  remove_index (oss, -3);
+  print_list (oss->order);
+  print_tree (oss->map);
 
   printf ("\n\nAll done!\n");
-  free_ordered_strings (os);
+  free_ordered_strings (oss);
 }

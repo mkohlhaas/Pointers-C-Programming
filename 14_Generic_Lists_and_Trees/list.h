@@ -9,10 +9,13 @@ typedef struct link
   struct link *next;
 } link;
 
+typedef void (*free_link_fn) (link *);
+typedef void (*print_link_fn) (link *);
+
 typedef struct list_api
 {
-  void (*free) (link *);
-  void (*print) (link *);
+  free_link_fn  free;
+  print_link_fn print;
 } list_api;
 
 typedef struct list
@@ -20,6 +23,22 @@ typedef struct list
   link     head;
   list_api api;
 } list;
+
+// `x` is a `list*`; returns `link*`
+#define head(x)          (&(x)->head)
+#define front(x)         (head (x)->next)
+#define back(x)          (head (x)->prev)
+#define is_empty(x)      (head (x) == front (x))
+#define append(x, link)  link_before (head (x), link)
+#define prepend(x, link) link_after (head (x), link)
+
+typedef bool (*pred_fn) (link *);
+
+list *new_list (list_api api);
+void  free_list (list *lst);
+void  print_list (list *lst);
+link *find_link (list *lst, link *from, pred_fn pred_fn);
+void  delete_if (list *lst, pred_fn pred_fn);
 
 // connect `x` to `y` (x ↔ y)
 static inline void
@@ -48,8 +67,7 @@ link_after (link *x, link *y)
 // insert y before x (y ↔ x)
 #define link_before(x, y) link_after ((x)->prev, y)
 
-// This time, unlink will set x's pointers to NULL.
-// We don't want to risk the callback function modifying the list after the link is removed.
+// `unlink` sets pointers of `x` to `NULL`.
 static inline void
 unlink (link *lnk)
 {
@@ -62,17 +80,3 @@ unlink (link *lnk)
   lnk->prev       = NULL;
   lnk->next       = NULL;
 }
-
-// `x` is a `list*`; returns `link*`
-#define head(x)          (&(x)->head)
-#define front(x)         (head (x)->next)
-#define back(x)          (head (x)->prev)
-#define is_empty(x)      (head (x) == front (x))
-#define append(x, link)  link_before (head (x), link)
-#define prepend(x, link) link_after (head (x), link)
-
-list *new_list (list_api api);
-void  free_list (list *lst);
-void  print_list (list *lst);
-link *find_link (list *lst, link *from, bool (*pred) (link *));
-void  delete_if (list *lst, bool (*pred) (link *));

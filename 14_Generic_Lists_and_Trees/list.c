@@ -1,5 +1,4 @@
 #include "list.h"
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,7 +24,7 @@ new_list (list_api api)
 void
 free_list (list *lst)
 {
-  void (*free_link) (link *) = lst->api.free;
+  free_link_fn free_link = lst->api.free;
   if (free_link)
     {
       link *lnk = front (lst);
@@ -40,7 +39,7 @@ free_list (list *lst)
 }
 
 static void
-print_link (link *lnk)
+default_print_link (link *lnk)
 {
   printf ("<link %p>", (void *)lnk);
 }
@@ -48,7 +47,7 @@ print_link (link *lnk)
 void
 print_list (list *lst)
 {
-  void (*print) (link *) = (lst->api.print) ? lst->api.print : print_link;
+  print_link_fn print = lst->api.print ? lst->api.print : default_print_link;
   printf ("[ ");
   for (link *lnk = front (lst); lnk != head (lst); lnk = lnk->next)
     {
@@ -59,11 +58,11 @@ print_list (list *lst)
 }
 
 link *
-find_link (list *lst, link *from, bool (*pred) (link *))
+find_link (list *lst, link *from, pred_fn pred_fn)
 {
   for (link *lnk = from; lnk != head (lst); lnk = lnk->next)
     {
-      if (pred (lnk))
+      if (pred_fn (lnk))
         {
           return lnk;
         }
@@ -72,21 +71,21 @@ find_link (list *lst, link *from, bool (*pred) (link *))
 }
 
 void
-delete_if (list *lst, bool (*pred) (link *))
+delete_if (list *lst, pred_fn pred_fn)
 {
-  void (*free) (link *) = lst->api.free;
-  if (!free)
+  free_link_fn free = lst->api.free;
+  link        *lnk  = front (lst);
+  while (lnk != head (lst))
     {
-      link *lnk = front (lst);
-      while (lnk != head (lst))
+      link *next = lnk->next;
+      if (pred_fn (lnk))
         {
-          link *next = lnk->next;
-          if (pred (lnk))
+          unlink (lnk);
+          if (free)
             {
-              unlink (lnk);
               free (lnk);
             }
-          lnk = next;
         }
+      lnk = next;
     }
 }

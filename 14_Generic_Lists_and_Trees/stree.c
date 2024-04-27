@@ -1,13 +1,12 @@
 #include "stree.h"
-#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+// To create a new tree `key` and `cmp` functions are necessary.
 stree *
 new_tree (stree_api api)
 {
-  // `key` and `cmp` functions are mandatory.
   if (!(api.key && api.cmp))
     {
       return NULL;
@@ -15,20 +14,52 @@ new_tree (stree_api api)
   stree *tree = malloc (sizeof *tree);
   if (tree)
     {
+      node root = {
+        .parent = NULL,
+        .left   = NULL,
+        .right  = NULL,
+      };
       *tree = (stree){
-        .root = { .parent = NULL, .left = NULL, .right = NULL },
+        .root = root,
         .api  = api,
       };
     }
   return tree;
 }
 
-// Find parent and child
+static void
+free_nodes_rec (free_node_fn free, node *n)
+{
+  if (!n)
+    {
+      return;
+    }
+  free_nodes_rec (free, n->left);
+  free_nodes_rec (free, n->right);
+  if (free)
+    {
+      free (n);
+    }
+}
+
+void
+free_tree (stree *t)
+{
+  free_nodes_rec (t->api.free, t->root.left);
+  free (t);
+}
+
+// TODO: rewrite this function(?).
+//       `node** n` and return value are the same.
+//       `n` is always set to `node **real_tree = &parent->left;`
+//       before being called.
+
+// Finds parent and child.
 node **
 find_loc (stree *t, void const *key, node **n, node **p)
 {
-  void const *(*get_key) (node *n)          = t->api.key;
-  int (*cmp) (void const *x, void const *y) = t->api.cmp;
+  key_node_fn  get_key = t->api.key;
+  cmp_nodes_fn cmp     = t->api.cmp;
 
   while (*n)
     {
@@ -67,20 +98,20 @@ insert_node (stree *t, node *n)
   node      **target    = find_loc (t, key, real_tree, &parent);
   if (*target)
     {
-      delete_node (t, *target); // remove the old node and replace it with the new one
+      delete_node (t, *target);
     }
-  *target   = n;
+  *target   = n;             // TODO: what is this good for? It's superfluous.
   n->parent = parent;
-  n->left = n->right = NULL; // make the node a leaf
+  n->left = n->right = NULL; // makes the node a leaf
 }
 
 node **
-rightmost (node **n, node **p)
+rightmost (node **n, node **parent)
 {
   while ((*n)->right)
     {
-      *p = *n;
-      n  = &(*n)->right;
+      *parent = *n;
+      n       = &(*n)->right;
     }
   return n;
 }
@@ -88,7 +119,7 @@ rightmost (node **n, node **p)
 void
 remove_node (node *n)
 {
-  // only dummy root has no parent
+  // dummy root has no parent
   if (!n->parent)
     {
       return;
@@ -102,7 +133,7 @@ remove_node (node *n)
       *loc = n->left ? n->left : n->right;
       if (*loc)
         {
-          (*loc)->parent = n->parent; // could be both children are emtpy
+          (*loc)->parent = n->parent; // could be that both children are emtpy
         }
     }
   else
@@ -131,15 +162,8 @@ delete_node (stree *t, node *n)
     }
 }
 
-// Just recursion this time; the techniques for avoid it hasn't changed.
-static void
-default_print (node *n)
-{
-  printf ("<node %p>", n);
-}
-
 void
-print_node (void (*print) (node *n), node *n)
+print_node (print_node_fn print, node *n)
 {
   if (!n)
     {
@@ -154,32 +178,31 @@ print_node (void (*print) (node *n), node *n)
   putchar (')');
 }
 
+static void
+default_print_node (node *n)
+{
+  printf ("<node %p>", n);
+}
+
 void
 print_tree (stree *t)
 {
-  void (*print) (node *) = t->api.print ? t->api.print : default_print;
+  print_node_fn print = t->api.print ? t->api.print : default_print_node;
   print_node (print, t->root.left);
 }
 
-void
-free_nodes_rec (void (*free) (node *n), node *n)
+static inline bool
+contains (stree *t, void const *key)
 {
-  if (!n)
-    {
-      return;
-    }
-  free_nodes_rec (free, n->left);
-  free_nodes_rec (free, n->right);
-  if (free)
-    {
-      n->left = n->right = n->parent = NULL; // remove pointers before callback
-      free (n);
-    }
+  return !!find_node (t, key);
 }
 
-void
-free_tree (stree *t)
+static inline void
+delete_key (stree *t, void const *key)
 {
-  free_nodes_rec (t->api.free, t->root.left);
-  free (t);
+  node *x = find_node (t, key);
+  if (x)
+    {
+      delete_node (t, x);
+    }
 }

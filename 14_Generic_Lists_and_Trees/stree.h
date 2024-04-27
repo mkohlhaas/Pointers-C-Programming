@@ -4,26 +4,34 @@
 
 typedef struct node
 {
-  struct node *parent; // allows removal just by having a node (see remove_node(…))
+  struct node *parent;
   struct node *left;
   struct node *right;
 } node;
 
+typedef void const *(*key_node_fn) (node *n);
+typedef int         (*cmp_nodes_fn) (void const *x, void const *y);
+typedef void        (*print_node_fn) (node *n);
+typedef void        (*free_node_fn) (node *n);
+
 typedef struct stree_api
 {
-  void const *(*key) (node *n);
-  int (*cmp) (void const *x, void const *y);
-  void (*print) (node *n);
-  void (*free) (node *n);
+  key_node_fn   key;
+  cmp_nodes_fn  cmp;
+  print_node_fn print;
+  free_node_fn  free;
 } stree_api;
 
 typedef struct stree
 {
-  node      root; // dummy node -> every node has a parent: real tree starts with root's left child
+  // `root` is a dummy node.
+  // Every node - except the root node - has a parent.
+  // Real tree starts with left child of `root`.
+  node      root;
   stree_api api;
 } stree;
 
-// `t` is `stree*`; returns bool
+// `t` is of type `stree*`; returns bool
 #define empty_tree(t) ((t)->root.left == NULL)
 
 void   remove_node (node *n);
@@ -33,19 +41,3 @@ node  *find_node (stree *t, void const *key);
 stree *new_tree (stree_api api);
 void   print_tree (stree *t);
 void   free_tree (stree *t);
-
-static inline bool
-contains (stree *t, void const *key)
-{
-  return !!find_node (t, key);
-}
-
-static inline void
-delete_key (stree *t, void const *key)
-{
-  node *x = find_node (t, key);
-  if (x)
-    {
-      delete_node (t, x);
-    }
-}
