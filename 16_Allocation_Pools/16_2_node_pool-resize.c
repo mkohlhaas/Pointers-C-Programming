@@ -4,21 +4,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct node Node;
-
 typedef struct node
 {
-  Node *left;
-  Node *right;
-  int   val;
-} Node;
+  struct node *left;
+  struct node *right;
+  int          val;
+} node;
 
 typedef struct subpool SubPool;
 
 typedef struct subpool
 {
   SubPool *next;
-  Node     nodes[];
+  node     nodes[];
 } SubPool;
 
 SubPool *
@@ -64,14 +62,14 @@ new_pool (size_t init_capacity)
   return pool;
 }
 
-Node *
+node *
 node_alloc (NodePool *pool)
 {
   if (pool->top_used == pool->top_capacity)
     {
       // We want to resize by adding a pool twice as large as the
       // current largest pool. But first check if we can.
-      if (SIZE_MAX / 2 / sizeof (Node) < pool->top_capacity)
+      if (SIZE_MAX / 2 / sizeof (node) < pool->top_capacity)
         {
           return NULL;
         }
@@ -109,24 +107,24 @@ main ()
 {
   NodePool *pool;
   pool     = new_pool (3);
-  Node *n1 = node_alloc (pool);
-  Node *n2 = node_alloc (pool);
+  node *n1 = node_alloc (pool);
+  node *n2 = node_alloc (pool);
   assert (n2 - n1 == 1);
-  Node *n3 = node_alloc (pool);
+  node *n3 = node_alloc (pool);
   assert (n3 - n2 == 1);
-  Node *n4 = node_alloc (pool);
+  node *n4 = node_alloc (pool);
   assert (n4 - n3 != 1); // Technically they could sit like that, but it is highly unlikely...
-  Node *n5 = node_alloc (pool);
+  node *n5 = node_alloc (pool);
   assert (n5 - n4 == 1);
-  Node *n6 = node_alloc (pool);
+  node *n6 = node_alloc (pool);
   assert (n6 - n5 == 1);
-  Node *n7 = node_alloc (pool);
+  node *n7 = node_alloc (pool);
   assert (n7 - n6 == 1);
-  Node *n8 = node_alloc (pool);
+  node *n8 = node_alloc (pool);
   assert (n8 - n7 == 1);
-  Node *n9 = node_alloc (pool);
+  node *n9 = node_alloc (pool);
   assert (n9 - n8 == 1);
-  Node *n10 = node_alloc (pool);
+  node *n10 = node_alloc (pool);
   assert (n10 - n9 != 1); // Technically they could sit like that, but it is highly unlikely...
 
   free_pool (pool);

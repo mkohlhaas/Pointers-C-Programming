@@ -2,7 +2,7 @@
 #include "strees.h"
 
 // global refcounted vars must be initialised
-Node *empty_node;
+node *empty_node;
 
 void
 init_empty_node (void)
@@ -12,7 +12,13 @@ init_empty_node (void)
       return;
     }
   empty_node = rc_alloc (sizeof *empty_node, NULL);
-  memcpy (empty_node, &(Node){ .val = 314159, .left = NULL, .right = NULL }, sizeof *empty_node);
+  memcpy (empty_node,
+          &(node){
+              .val   = 314159,
+              .left  = NULL,
+              .right = NULL,
+          },
+          sizeof *empty_node);
   if (!empty_node)
     {
       abort ();
@@ -26,26 +32,26 @@ void
 free_node (void *p, void *ctx)
 {
   n_nodes--;
-  Node *n = p;
+  node *n = p;
   printf ("Freeing node %d.\n", n->val);
   decref_ctx (n->left, ctx);
   decref_ctx (n->right, ctx);
 }
 
-Node *
-new_node (int val, takes Node *left, takes Node *right)
+node *
+new_node (int val, takes node *left, takes node *right)
 {
   if (is_error (left) || is_error (right))
     {
       goto error;
     }
-  Node *n = rc_alloc (sizeof *n, free_node);
+  node *n = rc_alloc (sizeof *n, free_node);
   if (!n)
     {
       goto error;
     }
   n_nodes++;
-  memcpy (n, &(Node){ .val = val, .left = give (left), .right = give (right) }, sizeof *n);
+  memcpy (n, &(node){ .val = val, .left = give (left), .right = give (right) }, sizeof *n);
   return n;
 
 error:
@@ -55,7 +61,7 @@ error:
 }
 
 bool
-contains (borrows Node *tree, int val)
+contains (borrows node *tree, int val)
 {
   assert (!is_error (tree));
   if (is_empty (tree))
@@ -76,8 +82,8 @@ contains (borrows Node *tree, int val)
     }
 }
 
-Node *
-insert (takes Node *tree, int val)
+node *
+insert (takes node *tree, int val)
 {
   if (is_error (tree))
     {
@@ -93,8 +99,8 @@ insert (takes Node *tree, int val)
       return give (tree);
     }
   // int tval = tree->val;
-  Node *left  = incref (tree->left);
-  Node *right = incref (tree->right);
+  node *left  = incref (tree->left);
+  node *right = incref (tree->right);
   decref (tree);
   if (val < tree->val)
     {
@@ -107,7 +113,7 @@ insert (takes Node *tree, int val)
 }
 
 int
-rightmost_value (borrows Node *tree)
+rightmost_value (borrows node *tree)
 {
   assert (!is_empty (tree));
   while (!is_empty (tree->right))
@@ -117,7 +123,7 @@ rightmost_value (borrows Node *tree)
   return tree->val;
 }
 
-Node *delete (takes Node *tree, int val)
+node *delete (takes node *tree, int val)
 {
   if (is_empty (tree))
     {
@@ -125,8 +131,8 @@ Node *delete (takes Node *tree, int val)
     }
 
   int   tval  = tree->val;
-  Node *left  = incref (tree->left);
-  Node *right = incref (tree->right);
+  node *left  = incref (tree->left);
+  node *right = incref (tree->right);
   decref (tree);
 
   if (val < tval)
@@ -155,7 +161,7 @@ Node *delete (takes Node *tree, int val)
 }
 
 void
-print_tree_ (borrows Node *n)
+print_tree_ (borrows node *n)
 {
   if (is_empty (n))
     {
@@ -169,7 +175,7 @@ print_tree_ (borrows Node *n)
 }
 
 void
-print_tree (borrows Node *n)
+print_tree (borrows node *n)
 {
   print_tree_ (n);
   putchar ('\n');
@@ -178,7 +184,7 @@ print_tree (borrows Node *n)
 int
 main ()
 {
-  Node *x, *y, *z;
+  node *x, *y, *z;
   init_empty_node ();
 
   printf (" =============== Case 1 ===============\n");

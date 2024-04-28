@@ -1,26 +1,24 @@
 #include <assert.h>
 #include <stdlib.h>
 
-typedef struct node Node;
-
 typedef struct node
 {
-  Node *left;
-  Node *right;
-  int   val;
-} Node;
+  struct node *left;
+  struct node *right;
+  int          val;
+} node;
 
 typedef struct node_pool
 {
   size_t size;
   size_t used;
-  Node  *pool;
-} NodePool;
+  node  *pool;
+} node_pool;
 
-NodePool *
+node_pool *
 new_pool (size_t capacity)
 {
-  NodePool *pool = malloc (sizeof *pool);
+  node_pool *pool = malloc (sizeof *pool);
   if (!pool)
     {
       return NULL;
@@ -37,8 +35,8 @@ new_pool (size_t capacity)
   return pool;
 }
 
-Node *
-node_alloc (NodePool *pool)
+node *
+node_alloc (node_pool *pool)
 {
   if (pool->used == pool->size)
     {
@@ -48,7 +46,7 @@ node_alloc (NodePool *pool)
 }
 
 void
-free_pool (NodePool *pool)
+free_pool (node_pool *pool)
 {
   free (pool->pool);
   free (pool);
@@ -57,14 +55,14 @@ free_pool (NodePool *pool)
 int
 main ()
 {
-  NodePool *pool;
+  node_pool *pool;
   pool     = new_pool (3);
-  Node *n1 = node_alloc (pool);
-  Node *n2 = node_alloc (pool);
+  node *n1 = node_alloc (pool);
+  node *n2 = node_alloc (pool);
   assert (n2 - n1 == 1);
-  Node *n3 = node_alloc (pool);
+  node *n3 = node_alloc (pool);
   assert (n3 - n2 == 1);
-  Node *n4 = node_alloc (pool);
+  node *n4 = node_alloc (pool);
   assert (n4 == NULL);
 
   free_pool (pool);

@@ -1,33 +1,31 @@
 // with autoclean_list (cleanup attribute) you don't need to decref in the function definitions any more
-// tail recursion optimization not supported by compilers as time of writing
+// tail recursion optimization not supported by compilers at time of writing
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct link Link;
-
 typedef struct link
 {
-  int         refcount;
-  Link *const next;
-  int const   value;
-} Link;
+  int                refcount;
+  struct link *const next;
+  int const          value;
+} link;
 
-typedef Link *List;
+typedef link *List;
 
-Link *
-incref (Link *link)
+link *
+incref (link *link)
 {
   link->refcount++;
   return link;
 }
 
-void free_link (Link *link);
+void free_link (link *link);
 
-Link *
-decref (Link *link)
+link *
+decref (link *link)
 {
   if (link && --link->refcount == 0)
     {
@@ -38,14 +36,14 @@ decref (Link *link)
 }
 
 void
-free_link (Link *link)
+free_link (link *link)
 {
   decref (link->next);
   free (link);
 }
 
 // Empty lists and errors
-Link NIL_LINK = { .refcount = 1 };
+link NIL_LINK = { .refcount = 1 };
 #define is_error(x) ((x) == 0)
 #define is_nil(x)   ((x) == &NIL_LINK)
 #define NIL         incref (&NIL_LINK)
@@ -68,7 +66,7 @@ Link NIL_LINK = { .refcount = 1 };
 #define borrows
 
 void
-list_cleanup (Link **x)
+list_cleanup (link **x)
 {
   decref (*x);
 }
@@ -88,7 +86,7 @@ cons (int head, takes List tail_)
   List new_link = malloc (sizeof *new_link);
   if (new_link)
     {
-      Link link_data = { .refcount = 1,
+      link link_data = { .refcount = 1,
                          .next     = incref (tail), // tail will be deleted, so remember it here
                          .value    = head };
       memcpy (new_link, &link_data, sizeof *new_link);
@@ -108,7 +106,8 @@ print_list (borrows List x)
   printf ("]\n");
 }
 
-// LENGTH ------------------------------------------
+// -- length ------------------------------------------------------------------------------------ //
+
 int
 length_rec (takes List x_, int acc)
 {
@@ -126,7 +125,8 @@ length_rec (takes List x_, int acc)
 
 #define length(x) length_rec (x, 0)
 
-// REVERSE --------------------------------------
+// -- reverse ----------------------------------------------------------------------------------- //
+
 List
 reverse_rec (takes List x_, takes List acc_)
 {
@@ -148,7 +148,8 @@ reverse_rec (takes List x_, takes List acc_)
 
 #define reverse(x) reverse_rec (x, NIL)
 
-// CONCAT --------------------------------------
+// -- concat ------------------------------------------------------------------------------------ //
+
 List
 concat (takes List x_, takes List y_)
 {
@@ -168,7 +169,8 @@ concat (takes List x_, takes List y_)
     }
 }
 
-// MAIN ---------------------------------------
+// -- main -------------------------------------------------------------------------------------- //
+
 int
 main ()
 {

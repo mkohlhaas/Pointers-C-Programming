@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// ============================ Data Definitions ===============================
+// ---------------------------- Data Definitions ------------------------------------------------ //
 
 // just a test data structure - will not be filled with actual data in this example code
 typedef struct node Node;
@@ -42,7 +42,7 @@ typedef struct node_pool
   SubPool      *subpools;
 } NodePool;
 
-// ============================= Code ==========================================
+// ----------------------------- Code ----------------------------------------------------------- //
 
 SubPool *
 new_subpool (size_t capacity, SubPool *next)
@@ -131,7 +131,7 @@ free_pool (NodePool *pool)
   free (pool);
 }
 
-// ============================= Main ==========================================
+// ----------------------------- Main ----------------------------------------------------------- //
 
 int
 main ()

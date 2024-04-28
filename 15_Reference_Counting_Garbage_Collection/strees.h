@@ -6,16 +6,14 @@
 #include <string.h>
 
 // immutable tree (consisting of immutable nodes)
-typedef struct node Node;
-
 typedef struct node
 {
-  int const   val;
-  Node *const left;
-  Node *const right;
-} Node;
+  int const          val;
+  struct node *const left;
+  struct node *const right;
+} node;
 
-// t is Node*
+// `t` is of type `Node*`
 #define EMPTY       incref (empty_node)
 #define is_empty(t) (t == empty_node)
 #define is_error(t) (t == NULL)

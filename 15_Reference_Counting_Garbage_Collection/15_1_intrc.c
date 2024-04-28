@@ -5,28 +5,28 @@ typedef struct rc_int
 {
   int refcount;
   int value;
-} RCInt;
+} rc_int;
 
-RCInt *
+rc_int *
 new_rc_int (int i)
 {
-  RCInt *p = malloc (sizeof *p);
+  rc_int *p = malloc (sizeof *p);
   if (p)
     {
-      *p = (RCInt){ .refcount = 1, .value = i };
+      *p = (rc_int){ .refcount = 1, .value = i };
     }
   return p;
 }
 
 void
-free_rc_int (RCInt *i)
+free_rc_int (rc_int *i)
 {
   printf ("Freeing %d.\n", i->value);
   free (i);
 }
 
-RCInt *
-incref (RCInt *p)
+rc_int *
+incref (rc_int *p)
 {
   if (p)
     {
@@ -36,7 +36,7 @@ incref (RCInt *p)
 }
 
 void
-decref (RCInt *p)
+decref (rc_int *p)
 {
   if (p && --p->refcount == 0)
     {
@@ -47,10 +47,10 @@ decref (RCInt *p)
 int
 main ()
 {
-  // Ignoring malloc errors...
-  RCInt *i = new_rc_int (42);
-  RCInt *j = incref (i);
-  decref (i); // decrements... (though still referenced)
+  // ignoring malloc errors …
+  rc_int *i = new_rc_int (42);
+  rc_int *j = incref (i);
+  decref (i); // decrements … (though still referenced)
   printf ("Decremented 'i' but nothing happened (as it should).\n");
-  decref (j); // decrements and deletes...
+  decref (j); // decrements and deletes …
 }

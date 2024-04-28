@@ -43,7 +43,7 @@ cleanup (RefCount *stack)
 }
 
 // Debugging
-#define get_node(p) (Node *)((char *)p + offsetof (RefCount, user_data))
+#define get_node(p) (node *)((char *)p + offsetof (RefCount, user_data))
 
 void
 print_stack (RefCount *ctx)
@@ -51,7 +51,7 @@ print_stack (RefCount *ctx)
   printf ("stack: ");
   while (ctx)
     {
-      Node *n = get_node (ctx);
+      node *n = get_node (ctx);
       printf ("%p: %d, ", ctx, n->val);
       ctx = ctx->stack;
     }

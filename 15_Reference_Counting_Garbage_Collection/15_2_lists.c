@@ -4,34 +4,32 @@
 #include <string.h>
 
 // immutable list link
-typedef struct link Link;
-
 typedef struct link
 {
-  int         refcount;
-  int const   value;
-  Link *const next;
-} Link;
+  int                refcount;
+  int const          value;
+  struct link *const next;
+} link;
 
-typedef Link *List;
+typedef link *List;
 
 // x is a List
-Link NIL_LINK = { .refcount = 1 };
+link NIL_LINK = { .refcount = 1 };
 #define is_error(x) ((x) == NULL)
 #define is_nil(x)   ((x) == &NIL_LINK)
 #define NIL         incref (&NIL_LINK)
 
-Link *
-incref (Link *link)
+link *
+incref (link *link)
 {
   link->refcount++;
   return link;
 }
 
-void free_link (Link *link);
+void free_link (link *link);
 
 void
-decref (Link *link)
+decref (link *link)
 {
   if (link && --link->refcount == 0)
     {
@@ -40,7 +38,7 @@ decref (Link *link)
 }
 
 void
-free_link (Link *link)
+free_link (link *link)
 {
   decref (link->next);
   free (link);
@@ -80,9 +78,11 @@ new_link (int head, takes List tail)
       return NULL;
     }
 
-  Link link_data = { .refcount = 1,
-                     .next     = give (tail), // gives away the reference to the link
-                     .value    = head };
+  struct link link_data = {
+    .refcount = 1,
+    .next     = give (tail), // gives away the reference to the link
+    .value    = head,
+  };
   // getting around const'ness of value and next by memcpy'ing
   memcpy (link, &link_data, sizeof *link);
   return give (link);
@@ -126,7 +126,7 @@ length_rec (takes List x, int acc)
     }
   else
     {
-      Link *next = incref (x->next); // we need a reference to x->next as we will pass ownership in recursive call
+      link *next = incref (x->next); // we need a reference to x->next as we will pass ownership in recursive call
       decref (x);                    // same here
       return length_rec (give (next), acc + 1); // pass ownership of next
     }
@@ -172,7 +172,7 @@ reverse_rec (takes List x, takes List acc)
   else
     {
       int   value = x->value;
-      Link *next  = incref (x->next);
+      link *next  = incref (x->next);
       decref (x);
       return reverse_rec (give (next), new_link (value, acc));
     }
@@ -215,7 +215,7 @@ concat (takes List x, takes List y)
   else
     {
       int   value = x->value;
-      Link *next  = incref (x->next);
+      link *next  = incref (x->next);
       decref (x);
       return new_link (value, concat (give (next), give (y)));
     }
