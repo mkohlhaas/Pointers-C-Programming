@@ -8,15 +8,10 @@ new_list (list_api api)
   list *lst = malloc (sizeof *lst);
   if (lst)
     {
-      *lst = (list)
-        {
-          .head =
-            {
-              .next = &lst->head,
-              .prev = &lst->head,
-            },
-          .api = api,
-        };
+      *lst = (list){
+        .head = { .next = &lst->head, .prev = &lst->head },
+        .api  = api,
+      };
     }
   return lst;
 }

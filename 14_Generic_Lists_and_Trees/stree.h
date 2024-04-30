@@ -31,9 +31,6 @@ typedef struct stree
   stree_api api;
 } stree;
 
-// `t` is of type `stree*`; returns bool
-#define empty_tree(t) ((t)->root.left == NULL)
-
 void   remove_node (node *n);
 void   delete_node (stree *t, node *n);
 void   insert_node (stree *t, node *n);

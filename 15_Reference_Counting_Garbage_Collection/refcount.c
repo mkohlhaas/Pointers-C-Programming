@@ -1,10 +1,10 @@
 #include "refcount.h"
-#include "strees.h" // just for debugging purposes
+#include "strees.h"
 
 void *
-rc_alloc (size_t size, CleanupFn cleanup)
+rc_alloc (size_t size, cleanup_fn cleanup)
 {
-  RefCount *rc = malloc (RCSIZE + size);
+  refcount *rc = malloc (RCSIZE + size);
   if (!rc)
     {
       return NULL;
@@ -21,13 +21,13 @@ incref (void *p)
     {
       return p;
     }
-  RefCount *rc = get_refcount (p);
+  refcount *rc = get_refcount (p);
   rc->rc++;
   return p;
 }
 
 void
-cleanup (RefCount *stack)
+cleanup (refcount *stack)
 {
   while (stack)
     {
@@ -36,17 +36,18 @@ cleanup (RefCount *stack)
         {
           stack->cleanup (user_mem (stack), stack);
         }
-      RefCount *next = stack->stack;
+      refcount *next = stack->stack;
       free (stack);
       stack = next;
     }
 }
 
-// Debugging
-#define get_node(p) (node *)((char *)p + offsetof (RefCount, user_data))
+// debugging
+
+#define get_node(p) (node *)((char *)p + offsetof (refcount, user_data))
 
 void
-print_stack (RefCount *ctx)
+print_stack (refcount *ctx)
 {
   printf ("stack: ");
   while (ctx)
@@ -69,12 +70,12 @@ decref_ctx (void *p, void *ctx)
     {
       return p;
     }
-  RefCount *rc = get_refcount (p);
+  refcount *rc = get_refcount (p);
   if (--rc->rc == 0)
     {
       if (ctx)
         {
-          RefCount *stack = ctx;
+          refcount *stack = ctx;
           rc->stack       = stack->stack; // push on stack
           stack->stack    = rc;
           print_stack (ctx);

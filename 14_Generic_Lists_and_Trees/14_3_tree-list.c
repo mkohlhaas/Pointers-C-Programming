@@ -55,7 +55,7 @@ strnode_free (node *n)
   free_ordered_string (container (n, ordered_string, node));
 }
 
-stree_api strnode_type = {
+stree_api strnode_api = {
   .key   = strnode_key,
   .cmp   = strnode_cmp,
   .print = strnode_print,
@@ -76,7 +76,7 @@ strlink_free (link *lnk)
   free_ordered_string (container (lnk, ordered_string, link));
 }
 
-list_api strlink_type = {
+list_api strlink_api = {
   .print = strlink_print,
   .free  = strlink_free,
 };
@@ -137,8 +137,8 @@ new_ordered_strings ()
     {
       abort ();
     }
-  os->map   = new_tree (strnode_type);
-  os->order = new_list (strlink_type);
+  os->map   = new_tree (strnode_api);
+  os->order = new_list (strlink_api);
   if (!os->map || !os->order)
     {
       abort ();

@@ -24,14 +24,6 @@ typedef struct list
   list_api api;
 } list;
 
-// `x` is a `list*`; returns `link*`
-#define head(x)          (&(x)->head)
-#define front(x)         (head (x)->next)
-#define back(x)          (head (x)->prev)
-#define is_empty(x)      (head (x) == front (x))
-#define append(x, link)  link_before (head (x), link)
-#define prepend(x, link) link_after (head (x), link)
-
 typedef bool (*pred_fn) (link *);
 
 list *new_list (list_api api);
@@ -64,9 +56,6 @@ link_after (link *x, link *y)
   connect_neighbours (y);
 }
 
-// insert y before x (y ↔ x)
-#define link_before(x, y) link_after ((x)->prev, y)
-
 // `unlink` sets pointers of `x` to `NULL`.
 static inline void
 unlink (link *lnk)
@@ -80,3 +69,12 @@ unlink (link *lnk)
   lnk->prev       = NULL;
   lnk->next       = NULL;
 }
+
+// `x` is a `list*`; returns `link*`
+#define head(x)           (&(x)->head)
+#define front(x)          (head (x)->next)
+#define back(x)           (head (x)->prev)
+#define is_empty(x)       (head (x) == front (x))
+#define link_before(x, y) link_after ((x)->prev, y)
+#define append(x, link)   link_before (head (x), link)
+#define prepend(x, link)  link_after (head (x), link)

@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// `t` is of type `stree*`; returns bool
+#define empty_tree(t) ((t)->root.left == NULL)
+
 // To create a new tree `key` and `cmp` functions are necessary.
 stree *
 new_tree (stree_api api)

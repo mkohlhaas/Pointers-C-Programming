@@ -50,7 +50,7 @@ main ()
   // ignoring malloc errors …
   rc_int *i = new_rc_int (42);
   rc_int *j = incref (i);
-  decref (i); // decrements … (though still referenced)
+  decref (i);
   printf ("Decremented 'i' but nothing happened (as it should).\n");
-  decref (j); // decrements and deletes …
+  decref (j);
 }
