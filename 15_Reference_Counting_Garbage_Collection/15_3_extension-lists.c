@@ -1,5 +1,5 @@
-// with autoclean_list (cleanup attribute) you don't need to decref in the function definitions any more
-// tail recursion optimization not supported by compilers at time of writing
+// With autoclean_list (cleanup attribute) you don't need to decref in the function definitions any more.
+// Tail recursion optimization not supported by compilers at time of writing.
 
 #include <assert.h>
 #include <stdio.h>

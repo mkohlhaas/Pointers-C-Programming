@@ -3,18 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-// immutable list link
 typedef struct link
 {
   int                refcount;
   int const          value;
   struct link *const next;
-} link;
+} link, *list;
 
-typedef link *List;
-
-// x is a List
 link NIL_LINK = { .refcount = 1 };
+
+// x is a list
 #define is_error(x) ((x) == NULL)
 #define is_nil(x)   ((x) == &NIL_LINK)
 #define NIL         incref (&NIL_LINK)
@@ -41,6 +39,7 @@ void
 free_link (link *link)
 {
   decref (link->next);
+  printf ("Freeing: %d at %p\n", link->value, link);
   free (link);
 }
 
@@ -63,15 +62,15 @@ free_link (link *link)
   })
 #endif
 
-List
-new_link (int head, takes List tail)
+list
+new_link (int head, takes list tail)
 {
   if (is_error (tail))
     {
       return NULL;
     }
 
-  List link = malloc (sizeof *link);
+  list link = malloc (sizeof *link);
   if (!link)
     {
       decref (tail); // new_link() owns tail and has to decref() it
@@ -83,13 +82,14 @@ new_link (int head, takes List tail)
     .next     = give (tail), // gives away the reference to the link
     .value    = head,
   };
-  // getting around const'ness of value and next by memcpy'ing
+
+  // using `memcpy` to get around constness of `value` and `next`
   memcpy (link, &link_data, sizeof *link);
   return give (link);
 }
 
 void
-print_list (borrows List x)
+print_list (borrows list x)
 {
   printf ("[ ");
   while (!is_nil (x))
@@ -100,15 +100,19 @@ print_list (borrows List x)
   printf ("]\n");
 }
 
-// LENGTH ------------------------------------------
 #if 0
-int length_rec(borrows list x, int acc)
+int
+length_rec (borrows list x, int acc)
 {
-  assert(!is_error(x));
-  if (is_nil(x))
-    return acc;
+  assert (!is_error (x));
+  if (is_nil (x))
+    {
+      return acc;
+    }
   else
-    return length_rec(x->next, acc + 1);
+    {
+      return length_rec (x->next, acc + 1);
+    }
 }
 
 #define length(x) length_rec (x, 0)
@@ -116,7 +120,7 @@ int length_rec(borrows list x, int acc)
 #else
 
 int
-length_rec (takes List x, int acc)
+length_rec (takes list x, int acc)
 {
   assert (!is_error (x));
   if (is_nil (x))
@@ -128,35 +132,39 @@ length_rec (takes List x, int acc)
     {
       link *next = incref (x->next); // we need a reference to x->next as we will pass ownership in recursive call
       decref (x);                    // same here
-      return length_rec (give (next), acc + 1); // pass ownership of next
+      return length_rec (give (next), acc + 1);
     }
 }
+
 #define length(x) length_rec (x, 0)
 
 #endif
 
-// REVERSE --------------------------------------
-// returns a new list as lists are immutable
-
 #if 0
-list reverse_rec(borrows list x, borrows list acc)
+list
+reverse_rec (borrows list x, borrows list acc)
 {
-  if (is_error(x) || is_error(acc)) {
-    return NULL;
-  }
-  if (is_nil(x)) {
-    return incref(acc);  // incref a borrowed reference when returning
-  } else {
-    return reverse_rec(x->next, new_link(x->value, incref(acc))); // new_link takes list, so we need to incref before
-  }
-}
+  if (is_error (x) || is_error (acc))
+    {
+      return NULL;
+    }
 
-#define reverse(x) reverse_rec (x, NIL)
+  if (is_nil (x))
+    {
+      return incref (acc); // incref a borrowed reference when returning
+    }
+  else
+    {
+      // new_link takes list, so we need to incref before
+      return reverse_rec (x->next, new_link (x->value, incref (acc)));
+    }
+}
 
 #else
 
-List
-reverse_rec (takes List x, takes List acc)
+// returns a new list as lists are immutable
+list
+reverse_rec (takes list x, takes list acc)
 {
   if (is_error (x) || is_error (acc))
     {
@@ -178,28 +186,33 @@ reverse_rec (takes List x, takes List acc)
     }
 }
 
-#define reverse(x) reverse_rec (x, NIL)
-
 #endif
 
-// CONCAT --------------------------------------
+#define reverse(x) reverse_rec (x, NIL)
+
 #if 0
-list concat(borrows list x, borrows list y)
+list
+concat (borrows list x, borrows list y)
 {
-  if (is_error(x) || is_error(y)) {
-    return NULL;
-  }
-  if (is_nil(x)) {
-    return incref(y); // we return a new ref, so we must incref here
-  } else {
-    return new_link(x->value, concat(x->next, incref(y)));
-  }
+  if (is_error (x) || is_error (y))
+    {
+      return NULL;
+    }
+
+  if (is_nil (x))
+    {
+      return incref (y); // we return a new ref, so we must incref here
+    }
+  else
+    {
+      return new_link (x->value, concat (x->next, incref (y)));
+    }
 }
 
 #else
 
-List
-concat (takes List x, takes List y)
+list
+concat (takes list x, takes list y)
 {
   if (is_error (x) || is_error (y))
     {
@@ -226,57 +239,77 @@ concat (takes List x, takes List y)
 int
 main ()
 {
-  printf ("Construction:\n");
-  printf ("-------------\n");
-  List x = new_link (1, new_link (2, new_link (3, NIL)));
-  print_list (x);
+  list x, y, z;
 
-  List y = new_link (0, incref (x));
-  print_list (y);
+  {
+    printf ("Construction (refcount in brackets):\n");
+    printf ("------------------------------------\n");
+    x = new_link (1, new_link (2, new_link (3, NIL)));
+    print_list (x);
 
-  decref (x);
-  print_list (y);
+    y = new_link (0, incref (x));
+    print_list (y);
 
-  List z = new_link (-1, give (y)); // consider y gone!
-  print_list (z);
-  decref (z);
+    decref (x);
+    print_list (y);
 
-  printf ("\nLength:\n");
-  printf ("-------\n");
-  x = new_link (1, new_link (2, new_link (3, NIL)));
-  print_list (x);
-  printf ("len(x) = %d\n", length (incref (x)));
-  print_list (x);
-  // leaks if length doesn't free its input
-  printf ("len(x) = %d\n", length (new_link (1, new_link (2, new_link (3, NIL)))));
-  // decref(x);
-  // this frees x
-  length (give (x));
+    z = new_link (-1, give (y)); // consider y gone!
+    print_list (z);
+    decref (z);
 
-  printf ("\nReverse:\n");
-  printf ("--------\n");
-  x = new_link (1, new_link (2, new_link (3, NIL)));
-  print_list (x);
-  y = reverse (give (x));
-  print_list (y);
-  decref (y);
+    // x, y, and z point at freed memory
+    printf ("%p %p %p\n", x, y, z);
+    // leads to segmentation faults:
+    // print_list (x);
+    // print_list (y);
+    // print_list (z);
+  }
 
-  // would leak if reverse and length didn't free their input
-  printf ("%d\n", length (reverse (new_link (1, new_link (2, new_link (3, NIL))))));
+  {
+    printf ("\nLength:\n");
+    printf ("-------\n");
+    x = new_link (1, new_link (2, new_link (3, NIL)));
+    print_list (x);
+    printf ("len(x) = %d\n", length (incref (x)));
+    print_list (x);
+    // leaks if length doesn't free its input
+    printf ("len(x) = %d\n", length (new_link (1, new_link (2, new_link (3, NIL)))));
+    // decref(x);
+    // this frees x
+    length (give (x)); // we signal to ourself that `x` is not valid any more
 
-  printf ("\nConcat:\n");
-  printf ("-------\n");
-  x = new_link (1, new_link (2, new_link (3, NIL)));
-  y = new_link (4, new_link (5, NIL));
-  z = concat (incref (x), incref (y));
+    printf ("%p\n", x);
+    // leads to segmentation fault:
+    // print_list (x);
+  }
 
-  print_list (z);
-  decref (x);
-  decref (y);
-  print_list (z);
-  decref (z);
+  {
+    printf ("\nReverse:\n");
+    printf ("--------\n");
+    x = new_link (1, new_link (2, new_link (3, NIL)));
+    print_list (x);
+    y = reverse (give (x));
+    print_list (y);
+    decref (y);
+    // would leak if reverse and length didn't free their input
+    printf ("%d\n", length (reverse (new_link (1, new_link (2, new_link (3, NIL))))));
+  }
 
-  z = concat (new_link (1, new_link (2, NIL)), new_link (11, new_link (12, new_link (13, NIL))));
-  print_list (z);
-  decref (z);
+  {
+    printf ("\nConcat:\n");
+    printf ("-------\n");
+    x = new_link (1, new_link (2, new_link (3, NIL)));
+    y = new_link (4, new_link (5, NIL));
+    z = concat (incref (x), incref (y));
+
+    print_list (z);
+    decref (x);
+    decref (y);
+    print_list (z);
+    decref (z);
+
+    z = concat (new_link (1, new_link (2, NIL)), new_link (11, new_link (12, new_link (13, NIL))));
+    print_list (z);
+    decref (z);
+  }
 }

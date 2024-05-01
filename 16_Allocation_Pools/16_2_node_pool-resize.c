@@ -11,19 +11,17 @@ typedef struct node
   int          val;
 } node;
 
-typedef struct subpool SubPool;
-
 typedef struct subpool
 {
-  SubPool *next;
-  node     nodes[];
-} SubPool;
+  struct subpool *next;
+  node            nodes[];
+} subpool;
 
-SubPool *
-new_subpool (size_t capacity, SubPool *next)
+subpool *
+new_subpool (size_t capacity, subpool *next)
 {
-  SubPool *pool = NULL;
-  size_t   size = offsetof (SubPool, nodes) + (sizeof *pool->nodes) * capacity;
+  subpool *pool = NULL;
+  size_t   size = offsetof (subpool, nodes) + (sizeof *pool->nodes) * capacity;
   pool          = malloc (size);
   if (pool)
     {
@@ -33,23 +31,23 @@ new_subpool (size_t capacity, SubPool *next)
   return pool;
 }
 
-typedef struct node_pool
+typedef struct nodepool
 {
   size_t   top_capacity;
   size_t   top_used;
-  SubPool *subpools;
-} NodePool;
+  subpool *subpools;
+} nodepool;
 
-NodePool *
+nodepool *
 new_pool (size_t init_capacity)
 {
-  NodePool *pool = malloc (sizeof *pool);
+  nodepool *pool = malloc (sizeof *pool);
   if (!pool)
     {
       return NULL;
     }
 
-  SubPool *subpool = new_subpool (init_capacity, NULL);
+  subpool *subpool = new_subpool (init_capacity, NULL);
   if (!subpool)
     {
       free (pool);
@@ -63,7 +61,7 @@ new_pool (size_t init_capacity)
 }
 
 node *
-node_alloc (NodePool *pool)
+node_alloc (nodepool *pool)
 {
   if (pool->top_used == pool->top_capacity)
     {
@@ -74,7 +72,7 @@ node_alloc (NodePool *pool)
           return NULL;
         }
       size_t   new_size = 2 * pool->top_capacity;
-      SubPool *new_sub  = new_subpool (new_size, pool->subpools);
+      subpool *new_sub  = new_subpool (new_size, pool->subpools);
       if (!new_sub)
         {
           return NULL;
@@ -90,12 +88,12 @@ node_alloc (NodePool *pool)
 }
 
 void
-free_pool (NodePool *pool)
+free_pool (nodepool *pool)
 {
-  SubPool *sp = pool->subpools;
+  subpool *sp = pool->subpools;
   while (sp)
     {
-      SubPool *next = sp->next;
+      subpool *next = sp->next;
       free (sp);
       sp = next;
     }
@@ -105,7 +103,7 @@ free_pool (NodePool *pool)
 int
 main ()
 {
-  NodePool *pool;
+  nodepool *pool;
   pool     = new_pool (3);
   node *n1 = node_alloc (pool);
   node *n2 = node_alloc (pool);
@@ -113,7 +111,7 @@ main ()
   node *n3 = node_alloc (pool);
   assert (n3 - n2 == 1);
   node *n4 = node_alloc (pool);
-  assert (n4 - n3 != 1); // Technically they could sit like that, but it is highly unlikely...
+  assert (n4 - n3 != 1); // technically they could sit like that, but it is highly unlikely …
   node *n5 = node_alloc (pool);
   assert (n5 - n4 == 1);
   node *n6 = node_alloc (pool);
@@ -125,7 +123,7 @@ main ()
   node *n9 = node_alloc (pool);
   assert (n9 - n8 == 1);
   node *n10 = node_alloc (pool);
-  assert (n10 - n9 != 1); // Technically they could sit like that, but it is highly unlikely...
+  assert (n10 - n9 != 1); // technically they could sit like that, but it is highly unlikely …
 
   free_pool (pool);
 }

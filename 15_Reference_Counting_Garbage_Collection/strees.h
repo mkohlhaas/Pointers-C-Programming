@@ -13,7 +13,7 @@ typedef struct node
   struct node *const right;
 } node;
 
-// `t` is of type `Node*`
+// `t` is of type `node*`
 #define EMPTY       incref (empty_node)
 #define is_empty(t) (t == empty_node)
 #define is_error(t) (t == NULL)

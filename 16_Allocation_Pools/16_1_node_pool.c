@@ -40,7 +40,7 @@ node_alloc (node_pool *pool)
 {
   if (pool->used == pool->size)
     {
-      return NULL; // Pool is used up
+      return NULL; // pool is used up
     }
   return &pool->pool[pool->used++];
 }

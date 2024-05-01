@@ -1,7 +1,7 @@
 #include "refcount.h"
 #include "strees.h"
+#include <stdalign.h>
 
-// global refcounted vars must be initialised
 node *empty_node;
 
 void
@@ -11,6 +11,7 @@ init_empty_node (void)
     {
       return;
     }
+
   empty_node = rc_alloc (sizeof *empty_node, NULL);
   memcpy (empty_node,
           &(node){
@@ -28,12 +29,12 @@ init_empty_node (void)
 // counting number of nodes
 size_t n_nodes;
 
+// `cleanup_fn` function for a node.
 void
 free_node (void *p, void *ctx)
 {
   n_nodes--;
   node *n = p;
-  printf ("Freeing node %d.\n", n->val);
   decref_ctx (n->left, ctx);
   decref_ctx (n->right, ctx);
 }
@@ -45,13 +46,20 @@ new_node (int val, takes node *left, takes node *right)
     {
       goto error;
     }
+
   node *n = rc_alloc (sizeof *n, free_node);
   if (!n)
     {
       goto error;
     }
   n_nodes++;
-  memcpy (n, &(node){ .val = val, .left = give (left), .right = give (right) }, sizeof *n);
+  memcpy (n,
+          &(node){
+              .val   = val,
+              .left  = give (left),
+              .right = give (right),
+          },
+          sizeof *n);
   return n;
 
 error:
@@ -89,15 +97,18 @@ insert (takes node *tree, int val)
     {
       return NULL;
     }
+
   if (is_empty (tree))
     {
       decref (tree);
       return new_node (val, EMPTY, EMPTY);
     }
+
   if (val == tree->val)
     {
       return give (tree);
     }
+
   // int tval = tree->val;
   node *left  = incref (tree->left);
   node *right = incref (tree->right);
@@ -160,7 +171,7 @@ node *delete (takes node *tree, int val)
     }
 }
 
-void
+static void
 print_tree_ (borrows node *n)
 {
   if (is_empty (n))
@@ -169,7 +180,7 @@ print_tree_ (borrows node *n)
     }
   putchar ('(');
   print_tree_ (n->left);
-  printf (",%d[%zd],", n->val, (get_refcount (n))->rc);
+  printf (",%d[%zd],", n->val, (get_rc_struct (n))->rc);
   print_tree_ (n->right);
   putchar (')');
 }
@@ -186,6 +197,9 @@ main ()
 {
   node *x, *y, *z;
   init_empty_node ();
+
+  // same as RCSIZE
+  printf ("Max alignment size: %d bytes.\n\n", alignof (max_align_t));
 
   printf (" =============== Case 1 ===============\n");
   printf ("             Introduction.\n");
