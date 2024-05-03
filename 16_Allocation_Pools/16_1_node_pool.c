@@ -16,7 +16,7 @@ typedef struct node_pool
 } node_pool;
 
 node_pool *
-new_pool (size_t capacity)
+new_node_pool (size_t capacity)
 {
   node_pool *pool = malloc (sizeof *pool);
   if (!pool)
@@ -46,7 +46,7 @@ node_alloc (node_pool *pool)
 }
 
 void
-free_pool (node_pool *pool)
+free_node_pool (node_pool *pool)
 {
   free (pool->pool);
   free (pool);
@@ -56,7 +56,7 @@ int
 main ()
 {
   node_pool *pool;
-  pool     = new_pool (3);
+  pool     = new_node_pool (3);
   node *n1 = node_alloc (pool);
   node *n2 = node_alloc (pool);
   assert (n2 - n1 == 1);
@@ -65,5 +65,5 @@ main ()
   node *n4 = node_alloc (pool);
   assert (n4 == NULL);
 
-  free_pool (pool);
+  free_node_pool (pool);
 }

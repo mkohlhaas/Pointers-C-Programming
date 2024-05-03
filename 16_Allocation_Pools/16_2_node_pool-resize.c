@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// --------------------------------- Data Structures ------------------------------------------------- //
+
 typedef struct node
 {
   struct node *left;
@@ -13,33 +15,37 @@ typedef struct node
 
 typedef struct subpool
 {
-  struct subpool *next;
+  struct subpool *next_subpool;
   node            nodes[];
 } subpool;
 
-subpool *
-new_subpool (size_t capacity, subpool *next)
-{
-  subpool *pool = NULL;
-  size_t   size = offsetof (subpool, nodes) + (sizeof *pool->nodes) * capacity;
-  pool          = malloc (size);
-  if (pool)
-    {
-      pool->next = next;
-    }
-  printf ("Size and capacity of new subpool: %zu, %zu\n", size, capacity);
-  return pool;
-}
-
 typedef struct nodepool
 {
-  size_t   top_capacity;
-  size_t   top_used;
-  subpool *subpools;
+  size_t   capacity;
+  size_t   used;
+  subpool *subpool;
 } nodepool;
 
+// ---------------------------------- Code ----------------------------------------------------------- //
+
+// `next_subpool` is an existing subpool or NULL.
+subpool *
+new_subpool (size_t capacity, subpool *next_subpool)
+{
+  subpool *new_sub_pool = NULL;
+  size_t   size         = offsetof (subpool, nodes) + (sizeof *new_sub_pool->nodes) * capacity;
+  new_sub_pool          = malloc (size);
+  if (new_sub_pool)
+    {
+      new_sub_pool->next_subpool = next_subpool;
+    }
+  printf ("Size and capacity of new subpool: %3zu , %2zu\n", size, capacity);
+  return new_sub_pool;
+}
+
+// Creates new `nodepool` with initial `capacity`.
 nodepool *
-new_pool (size_t init_capacity)
+new_node_pool (size_t capacity)
 {
   nodepool *pool = malloc (sizeof *pool);
   if (!pool)
@@ -47,71 +53,80 @@ new_pool (size_t init_capacity)
       return NULL;
     }
 
-  subpool *subpool = new_subpool (init_capacity, NULL);
-  if (!subpool)
+  subpool *new_sub_pool = new_subpool (capacity, NULL);
+  if (!new_sub_pool)
     {
       free (pool);
       return NULL;
     }
 
-  pool->top_capacity = init_capacity;
-  pool->top_used     = 0;
+  pool->capacity = capacity;
+  pool->used     = 0;
+  pool->subpool  = new_sub_pool;
 
   return pool;
 }
 
-node *
-node_alloc (nodepool *pool)
-{
-  if (pool->top_used == pool->top_capacity)
-    {
-      // We want to resize by adding a pool twice as large as the
-      // current largest pool. But first check if we can.
-      if (SIZE_MAX / 2 / sizeof (node) < pool->top_capacity)
-        {
-          return NULL;
-        }
-      size_t   new_size = 2 * pool->top_capacity;
-      subpool *new_sub  = new_subpool (new_size, pool->subpools);
-      if (!new_sub)
-        {
-          return NULL;
-        }
-
-      // Success, so add new pool to list
-      pool->subpools     = new_sub;
-      pool->top_capacity = new_size;
-      pool->top_used     = 0;
-    }
-
-  return &pool->subpools->nodes[pool->top_used++];
-}
-
 void
-free_pool (nodepool *pool)
+free_node_pool (nodepool *pool)
 {
-  subpool *sp = pool->subpools;
+  subpool *sp = pool->subpool;
   while (sp)
     {
-      subpool *next = sp->next;
+      subpool *next = sp->next_subpool;
       free (sp);
       sp = next;
     }
   free (pool);
 }
 
+// Get node from nodepool.
+node *
+node_alloc (nodepool *pool)
+{
+  if (pool->used == pool->capacity)
+    {
+      // add a pool twice as large as the current largest pool - if we can.
+      if (SIZE_MAX / 2 / sizeof (node) < pool->capacity)
+        {
+          return NULL;
+        }
+      size_t   capacity     = 2 * pool->capacity;
+      subpool *new_sub_pool = new_subpool (capacity, pool->subpool);
+      if (!new_sub_pool)
+        {
+          return NULL;
+        }
+
+      // Success, so add new pool to list
+      pool->capacity = capacity;
+      pool->used     = 0;
+      pool->subpool  = new_sub_pool;
+    }
+
+  return &pool->subpool->nodes[pool->used++];
+}
+
+// ---------------------------------- Main ----------------------------------------------------------- //
+
 int
 main ()
 {
+  int offset    = offsetof (subpool, nodes);
+  int node_size = sizeof (node);
+  printf ("Offset of first node in subpool: %d\n", offset);
+  printf ("Size of node:                    %d\n", node_size);
+  printf ("Size of nodepool:                %d + %d * capacity\n\n", offset, node_size);
+
   nodepool *pool;
-  pool     = new_pool (3);
+  pool     = new_node_pool (3);
   node *n1 = node_alloc (pool);
   node *n2 = node_alloc (pool);
   assert (n2 - n1 == 1);
   node *n3 = node_alloc (pool);
   assert (n3 - n2 == 1);
-  node *n4 = node_alloc (pool);
-  assert (n4 - n3 != 1); // technically they could sit like that, but it is highly unlikely …
+  node *n4 = node_alloc (pool); // will create a new subpool
+  assert (n4 - n3 != 1);        // technically they could sit like that, but it is highly unlikely …
   node *n5 = node_alloc (pool);
   assert (n5 - n4 == 1);
   node *n6 = node_alloc (pool);
@@ -122,8 +137,8 @@ main ()
   assert (n8 - n7 == 1);
   node *n9 = node_alloc (pool);
   assert (n9 - n8 == 1);
-  node *n10 = node_alloc (pool);
-  assert (n10 - n9 != 1); // technically they could sit like that, but it is highly unlikely …
+  node *n10 = node_alloc (pool); // will create a new subpool
+  assert (n10 - n9 != 1);        // technically they could sit like that, but it is highly unlikely …
 
-  free_pool (pool);
+  free_node_pool (pool);
 }
